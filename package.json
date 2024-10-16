@@ -8,12 +8,17 @@
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
-    "@getcronit/pylon": "^2.0.0"
+    "@getcronit/pylon": "^2.0.0",
+    "@libsql/client": "^0.14.0",
+    "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.35.1"
   },
   "devDependencies": {
-    "@getcronit/pylon-dev": "^1.0.0",
     "@cloudflare/vitest-pool-workers": "^0.4.5",
     "@cloudflare/workers-types": "^4.20240903.0",
+    "@getcronit/pylon-dev": "^1.0.0",
+    "drizzle-kit": "^0.26.2",
+    "tsx": "^4.19.1",
     "typescript": "^5.5.2",
     "wrangler": "^3.60.3"
   },
