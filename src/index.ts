@@ -1,9 +1,13 @@
-import {app} from '@getcronit/pylon'
+import 'dotenv/config';
+
+import { app } from '@getcronit/pylon'
+
+import getDb from './db';
 
 export const graphql = {
   Query: {
-    hello: () => {
-      return 'Hello, world!'
+    hello: async () => {
+      return await getDb().query.humans.findMany()
     }
   },
   Mutation: {}
