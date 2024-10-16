@@ -5,7 +5,9 @@
   "scripts": {
     "deploy": "pylon build && wrangler deploy",
     "dev": "pylon dev -c \"wrangler dev\"",
-    "cf-typegen": "wrangler types"
+    "cf-typegen": "wrangler types",
+    "generate": "drizzle-kit generate",
+    "migrate": "drizzle-kit migrate"
   },
   "dependencies": {
     "@getcronit/pylon": "^2.0.0",
