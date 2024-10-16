@@ -18,10 +18,14 @@
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.4.5",
     "@cloudflare/workers-types": "^4.20240903.0",
+    "@eslint/js": "^9.12.0",
     "@getcronit/pylon-dev": "^1.0.0",
     "drizzle-kit": "^0.26.2",
+    "eslint": "^9.12.0",
+    "globals": "^15.11.0",
     "tsx": "^4.19.1",
     "typescript": "^5.5.2",
+    "typescript-eslint": "^8.9.0",
     "wrangler": "^3.60.3"
   },
   "repository": {
