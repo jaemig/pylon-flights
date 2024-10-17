@@ -33,13 +33,14 @@ export const airports = sqliteTable("airports", {
 
 export const flights = sqliteTable("flights", {
     id: int().primaryKey({ autoIncrement: true }),
-    departure: text({ length: 255 }).notNull(),
-    arrival: text({ length: 255 }).notNull(),
-    departureTime: text({ length: 10 }).notNull(), // YYYY-MM-DD HH:MM
-    arrivalTime: text({ length: 10 }).notNull(), // YYYY-MM DD HH:MM
+    flightNumber: text({ length: 7 }).notNull(),
+    departure: text().references(() => airports.id).notNull(),
+    arrival: text().references(() => airports.id).notNull(),
+    departureTime: text({ length: 25 }).notNull(), // timestamp
+    arrivalTime: text({ length: 25 }).notNull(), // timestamp
     pilot: int().references(() => humans.id).notNull(),
     copilot: int().references(() => humans.id).notNull(),
-    airline: text({ length: 255 }).notNull(),
+    airline: int().references(() => airlines.id).notNull(),
     status: text('status', { enum: ['scheduled', 'boarding', 'departed', 'arrived', 'cancelled'] }).notNull(),
     aircraft: text().references(() => aircrafts.id).notNull(),
 })
@@ -47,4 +48,9 @@ export const flights = sqliteTable("flights", {
 export const aircrafts = sqliteTable("aircrafts", {
     id: text({ length: 4 }).primaryKey(), // ICAO code
     model: text({ length: 255 }).notNull(),
+});
+
+export const airlines = sqliteTable("airlines", {
+    id: int().primaryKey(),
+    name: text({ length: 255 }).notNull(),
 });
