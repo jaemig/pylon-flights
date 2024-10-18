@@ -2,7 +2,6 @@ import getDb from ".";
 
 
 export default async function seed() {
-    // eslint-disable-next-line no-useless-catch
     try {
         const db = getDb();
 
@@ -730,8 +729,9 @@ export default async function seed() {
             INSERT INTO passengers (humanId, seat, class, flightId) VALUES
             ${passengerValues};
         `);
+
         return true;
-    } catch (e) {
-        throw e;
+    } catch {
+        return false;
     }
 }
