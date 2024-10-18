@@ -105,10 +105,10 @@ export default async function seed() {
             .map(([id, { name, country }]) => `('${id}', '${name}', '${country}')`)
             .join(", ");
 
-        // await db.run(`
-        //     INSERT INTO airports (id, name, country) VALUES
-        //     ${airportValues};
-        // `);
+        await db.run(`
+            INSERT INTO airports (id, name, country) VALUES
+            ${airportValues};
+        `);
 
         /**
          * AIRCRAFTS
@@ -203,10 +203,10 @@ export default async function seed() {
             .map(([id, model]) => `('${id}', '${model}')`)
             .join(", ");
 
-        // await db.run(`
-        //     INSERT INTO aircrafts (id, model) VALUES
-        //     ${aircraftValues};
-        // `);
+        await db.run(`
+            INSERT INTO aircrafts (id, model) VALUES
+            ${aircraftValues};
+        `);
 
         /**
          * HUMANS
@@ -413,12 +413,14 @@ export default async function seed() {
             .map(name => `('${name}')`)
             .join(", ");
 
-        // await db.run(`
-        //     INSERT INTO airlines (name) VALUES
-        //     ${airlineValues};
-        // `);
+        await db.run(`
+            INSERT INTO airlines (name) VALUES
+            ${airlineValues};
+        `);
 
-        // Flights
+        /**
+         * FLIGHTS
+         */
         const flights = [
             {
                 flightNumber: 'AA1234',
@@ -608,11 +610,126 @@ export default async function seed() {
             )
             .join(", ");
 
-        // await db.run(`
-        //     INSERT INTO flights (flightNumber, departure, arrival, departureTime, arrivalTime, pilot, copilot, airline, status, aircraft) VALUES
-        //     ${flightValues};
-        // `);
+        await db.run(`
+            INSERT INTO flights (flightNumber, departure, arrival, departureTime, arrivalTime, pilot, copilot, airline, status, aircraft) VALUES
+            ${flightValues};
+        `);
 
+        /**
+         * PASSENGERS
+         */
+
+        const passengers = [
+            { humanId: 1, seat: '12A', class: 'economy', flightId: 1 },
+            { humanId: 2, seat: '12B', class: 'economy', flightId: 1 },
+            { humanId: 3, seat: '1A', class: 'first', flightId: 2 },
+            { humanId: 4, seat: '1B', class: 'first', flightId: 2 },
+            { humanId: 5, seat: '5A', class: 'business', flightId: 3 },
+            { humanId: 6, seat: '5B', class: 'business', flightId: 3 },
+            { humanId: 7, seat: '20A', class: 'economy', flightId: 4 },
+            { humanId: 8, seat: '20B', class: 'economy', flightId: 4 },
+            { humanId: 9, seat: '2A', class: 'first', flightId: 5 },
+            { humanId: 10, seat: '2B', class: 'first', flightId: 5 },
+            { humanId: 11, seat: '15A', class: 'economy', flightId: 6 },
+            { humanId: 12, seat: '15B', class: 'economy', flightId: 6 },
+            { humanId: 13, seat: '3A', class: 'business', flightId: 7 },
+            { humanId: 14, seat: '3B', class: 'business', flightId: 7 },
+            { humanId: 15, seat: '18A', class: 'economy', flightId: 8 },
+            { humanId: 16, seat: '18B', class: 'economy', flightId: 8 },
+            { humanId: 17, seat: '4A', class: 'first', flightId: 9 },
+            { humanId: 18, seat: '4B', class: 'first', flightId: 9 },
+            { humanId: 19, seat: '6A', class: 'business', flightId: 10 },
+            { humanId: 20, seat: '6B', class: 'business', flightId: 10 },
+            { humanId: 21, seat: '22A', class: 'economy', flightId: 11 },
+            { humanId: 22, seat: '22B', class: 'economy', flightId: 11 },
+            { humanId: 23, seat: '7A', class: 'first', flightId: 12 },
+            { humanId: 24, seat: '7B', class: 'first', flightId: 12 },
+            { humanId: 25, seat: '9A', class: 'business', flightId: 13 },
+            { humanId: 26, seat: '9B', class: 'business', flightId: 13 },
+            { humanId: 27, seat: '24A', class: 'economy', flightId: 14 },
+            { humanId: 28, seat: '24B', class: 'economy', flightId: 14 },
+            { humanId: 29, seat: '8A', class: 'first', flightId: 15 },
+            { humanId: 30, seat: '8B', class: 'first', flightId: 15 },
+            { humanId: 31, seat: '10A', class: 'business', flightId: 1 },
+            { humanId: 32, seat: '10B', class: 'business', flightId: 1 },
+            { humanId: 33, seat: '11A', class: 'economy', flightId: 2 },
+            { humanId: 34, seat: '11B', class: 'economy', flightId: 2 },
+            { humanId: 35, seat: '6A', class: 'business', flightId: 3 },
+            { humanId: 36, seat: '6B', class: 'business', flightId: 3 },
+            { humanId: 37, seat: '21A', class: 'economy', flightId: 4 },
+            { humanId: 38, seat: '21B', class: 'economy', flightId: 4 },
+            { humanId: 39, seat: '3A', class: 'first', flightId: 5 },
+            { humanId: 40, seat: '3B', class: 'first', flightId: 5 },
+            { humanId: 41, seat: '16A', class: 'economy', flightId: 6 },
+            { humanId: 42, seat: '16B', class: 'economy', flightId: 6 },
+            { humanId: 43, seat: '4A', class: 'business', flightId: 7 },
+            { humanId: 44, seat: '4B', class: 'business', flightId: 7 },
+            { humanId: 45, seat: '19A', class: 'economy', flightId: 8 },
+            { humanId: 46, seat: '19B', class: 'economy', flightId: 8 },
+            { humanId: 47, seat: '5A', class: 'first', flightId: 9 },
+            { humanId: 48, seat: '5B', class: 'first', flightId: 9 },
+            { humanId: 49, seat: '7A', class: 'business', flightId: 10 },
+            { humanId: 50, seat: '7B', class: 'business', flightId: 10 },
+            { humanId: 51, seat: '23A', class: 'economy', flightId: 11 },
+            { humanId: 52, seat: '23B', class: 'economy', flightId: 11 },
+            { humanId: 53, seat: '8A', class: 'first', flightId: 12 },
+            { humanId: 54, seat: '8B', class: 'first', flightId: 12 },
+            { humanId: 55, seat: '10A', class: 'business', flightId: 13 },
+            { humanId: 56, seat: '10B', class: 'business', flightId: 13 },
+            { humanId: 57, seat: '25A', class: 'economy', flightId: 14 },
+            { humanId: 58, seat: '25B', class: 'economy', flightId: 14 },
+            { humanId: 59, seat: '9A', class: 'first', flightId: 15 },
+            { humanId: 60, seat: '9B', class: 'first', flightId: 15 },
+            { humanId: 61, seat: '11A', class: 'economy', flightId: 1 },
+            { humanId: 62, seat: '11B', class: 'economy', flightId: 1 },
+            { humanId: 63, seat: '2A', class: 'first', flightId: 2 },
+            { humanId: 64, seat: '2B', class: 'first', flightId: 2 },
+            { humanId: 65, seat: '6A', class: 'business', flightId: 3 },
+            { humanId: 66, seat: '6B', class: 'business', flightId: 3 },
+            { humanId: 67, seat: '21A', class: 'economy', flightId: 4 },
+            { humanId: 68, seat: '21B', class: 'economy', flightId: 4 },
+            { humanId: 69, seat: '3A', class: 'first', flightId: 5 },
+            { humanId: 70, seat: '3B', class: 'first', flightId: 5 },
+            { humanId: 71, seat: '16A', class: 'economy', flightId: 6 },
+            { humanId: 72, seat: '16B', class: 'economy', flightId: 6 },
+            { humanId: 73, seat: '4A', class: 'business', flightId: 7 },
+            { humanId: 74, seat: '4B', class: 'business', flightId: 7 },
+            { humanId: 75, seat: '19A', class: 'economy', flightId: 8 },
+            { humanId: 76, seat: '19B', class: 'economy', flightId: 8 },
+            { humanId: 77, seat: '5A', class: 'first', flightId: 9 },
+            { humanId: 78, seat: '5B', class: 'first', flightId: 9 },
+            { humanId: 79, seat: '7A', class: 'business', flightId: 10 },
+            { humanId: 80, seat: '7B', class: 'business', flightId: 10 },
+            { humanId: 81, seat: '23A', class: 'economy', flightId: 11 },
+            { humanId: 82, seat: '23B', class: 'economy', flightId: 11 },
+            { humanId: 83, seat: '8A', class: 'first', flightId: 12 },
+            { humanId: 84, seat: '8B', class: 'first', flightId: 12 },
+            { humanId: 85, seat: '10A', class: 'business', flightId: 13 },
+            { humanId: 86, seat: '10B', class: 'business', flightId: 13 },
+            { humanId: 87, seat: '25A', class: 'economy', flightId: 14 },
+            { humanId: 88, seat: '25B', class: 'economy', flightId: 14 },
+            { humanId: 89, seat: '9A', class: 'first', flightId: 15 },
+            { humanId: 90, seat: '9B', class: 'first', flightId: 15 },
+            { humanId: 91, seat: '12A', class: 'economy', flightId: 1 },
+            { humanId: 92, seat: '12B', class: 'economy', flightId: 1 },
+            { humanId: 93, seat: '1A', class: 'first', flightId: 2 },
+            { humanId: 94, seat: '1B', class: 'first', flightId: 2 },
+            { humanId: 95, seat: '5A', class: 'business', flightId: 3 },
+            { humanId: 96, seat: '5B', class: 'business', flightId: 3 },
+            { humanId: 97, seat: '20A', class: 'economy', flightId: 4 },
+            { humanId: 98, seat: '20B', class: 'economy', flightId: 4 },
+            { humanId: 99, seat: '2A', class: 'first', flightId: 5 },
+            { humanId: 100, seat: '2B', class: 'first', flightId: 5 }
+        ];
+
+        const passengerValues = passengers
+            .map(({ humanId, seat, class: seatClass, flightId }) => `(${humanId}, '${seat}', '${seatClass}', ${flightId})`)
+            .join(", ");
+
+        await db.run(`
+            INSERT INTO passengers (humanId, seat, class, flightId) VALUES
+            ${passengerValues};
+        `);
         return true;
     } catch (e) {
         throw e;

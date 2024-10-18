@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { app } from '@getcronit/pylon'
 
 import getDb from './db';
-import seed from './db/seed';
+// import seed from './db/seed';
 
 export const graphql = {
   Query: {
@@ -21,10 +21,13 @@ export const graphql = {
     },
     airlines: async () => {
       return await getDb().query.airlines.findMany()
+    },
+    passengers: async () => {
+      return await getDb().query.passengers.findMany()
     }
   },
   Mutation: {
-    seed: seed,
+    // seed: seed,
   }
 }
 
