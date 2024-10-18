@@ -1,6 +1,8 @@
-import { and, eq, SQL } from "drizzle-orm";
+import { and, eq, like, SQL } from "drizzle-orm";
+
 import getDb from "../db";
 import { humans } from "../db/schema";
+import { ServiceError } from "@getcronit/pylon";
 
 /**
  * Get humans
@@ -9,21 +11,28 @@ import { humans } from "../db/schema";
  * @returns     Array of humans
  */
 export async function getHumans(firstname?: string, lastname?: string, birthdate?: string, take?: number, skip?: number) {
-    try {
-        const conditions: SQL[] = [];
-
-        if (firstname) conditions.push(eq(humans.firstname, firstname.trim().toLocaleLowerCase()));
-        if (lastname) conditions.push(eq(humans.lastname, lastname.trim().toLocaleLowerCase()));
-        if (birthdate) conditions.push(eq(humans.birthdate, birthdate));
-
-        return await getDb().query.humans.findMany({
-            limit: take ?? 20,
-            offset: skip,
-            where: conditions.length > 0 ? and(...conditions) : undefined, // Use `and` only if there are conditions
+    if ((take !== undefined && take < 0) || (skip !== undefined && skip < 0)) {
+        throw new ServiceError('Invalid pagination', {
+            statusCode: 400,
+            code: 'invalid_pagination',
+            details: {
+                take,
+                skip
+            }
         });
-    } catch {
-        return [];
     }
+
+    const conditions: SQL[] = [];
+
+    if (firstname) conditions.push(like(humans.firstname, `${firstname.trim().toLocaleLowerCase()}%`));
+    if (lastname) conditions.push(like(humans.lastname, `${lastname.trim().toLocaleLowerCase()}%`));
+    if (birthdate) conditions.push(like(humans.birthdate, `${birthdate.trim().toLocaleLowerCase()}%`));
+
+    return await getDb().query.humans.findMany({
+        limit: take ?? 20,
+        offset: skip,
+        where: conditions.length > 0 ? and(...conditions) : undefined, // Use `and` only if there are conditions
+    });
 }
 
 /**
@@ -72,14 +81,23 @@ export async function addHuman(firstname: string, lastname: string, birthdate: s
  * @returns     The deleted human  
  */
 export async function deleteHuman(id: number) {
-    try {
-        const [human] = await getDb()
-            .delete(humans)
-            .where(eq(humans.id, id))
-            .returning();
 
-        return human;
-    } catch {
-        return undefined;
+    const existingHuman = await getHumanById(id);
+
+    if (!existingHuman) {
+        throw new ServiceError('Human does not exist', {
+            statusCode: 400,
+            code: 'human_does_not_exist',
+            details: {
+                id
+            }
+        });
     }
+
+    const [human] = await getDb()
+        .delete(humans)
+        .where(eq(humans.id, id))
+        .returning();
+
+    return human;
 }
