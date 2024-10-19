@@ -117,6 +117,14 @@ export async function addHuman(firstname: string, lastname: string, birthdate: s
 
 }
 
+/**
+ * Update a human
+ * @param id            The id of the human
+ * @param firstname     The first name of the human
+ * @param lastname      The last name of the human
+ * @param birthdate     The birthdate of the human
+ * @returns             The updated human
+ */
 export async function updateHuman(id: number, firstname?: string, lastname?: string, birthdate?: string) {
     const existingHuman = await getHumanById(id);
 
