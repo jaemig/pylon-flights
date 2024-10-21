@@ -3,6 +3,26 @@ import { ServiceError } from "@getcronit/pylon";
 
 import getDb from "../db";
 import { humans } from "../db/schema";
+import { checkEditSecret, generateUUID, isValidUUID } from "../utilts";
+
+/**
+ * Get human by id
+ * @param id    The id of the human
+ * @returns     The human or undefined if not found
+ */
+async function $getHumanById(id: number) {
+    try {
+        return await getDb().query.humans
+            .findFirst({
+                where: eq(humans.id, id),
+            });
+    } catch {
+        throw new ServiceError('Failed to get human', {
+            statusCode: 400,
+            code: 'db_error',
+        });
+    }
+}
 
 /**
  * Get humans
@@ -33,6 +53,9 @@ export async function getHumans(firstname?: string, lastname?: string, birthdate
             limit: take ?? 20,
             offset: skip,
             where: conditions.length > 0 ? and(...conditions) : undefined, // Use `and` only if there are conditions
+            columns: {
+                id: false,
+            }
         });
     } catch {
         throw new ServiceError('Failed to get humans', {
@@ -44,14 +67,27 @@ export async function getHumans(firstname?: string, lastname?: string, birthdate
 
 /**
  * Get human by id
- * @param id    The id of the human
+ * @param id    The uuid of the human
  * @returns     The human or undefined if not found
  */
-export async function getHumanById(id: number) {
+export async function getHumanByUuid(id: string) {
+    if (!isValidUUID(id)) {
+        throw new ServiceError('Invalid uuid', {
+            statusCode: 400,
+            code: 'invalid_uuid',
+            details: {
+                id
+            }
+        });
+    }
+
     try {
         return await getDb().query.humans
             .findFirst({
-                where: eq(humans.id, id)
+                where: eq(humans.uuid, id),
+                columns: {
+                    id: false,
+                }
             });
     } catch {
         throw new ServiceError('Failed to get human', {
@@ -63,12 +99,20 @@ export async function getHumanById(id: number) {
 
 /**
  * Add a human
+ * @param secret        The secret to authorize the operation
  * @param firstname     The first name of the human
  * @param lastname      The last name of the human
  * @param birthdate     The birthdate of the human
  * @returns             The added human
  */
-export async function addHuman(firstname: string, lastname: string, birthdate: string) {
+export async function addHuman(secret: string, firstname: string, lastname: string, birthdate: string) {
+    if (!checkEditSecret(secret)) {
+        throw new ServiceError('Unauthorized', {
+            statusCode: 401,
+            code: 'unauthorized',
+        });
+    }
+
     const birthdateParts = birthdate.split('-');
     if (birthdateParts.length !== 3 || birthdateParts[0].length !== 4 || birthdateParts[1].length !== 2 || birthdateParts[2].length !== 2) {
         throw new ServiceError('Invalid birthdate', {
@@ -102,6 +146,7 @@ export async function addHuman(firstname: string, lastname: string, birthdate: s
         const [human] = await getDb()
             .insert(humans)
             .values({
+                uuid: generateUUID(),
                 firstname: firstnameInput,
                 lastname: lastnameInput,
                 birthdate
@@ -119,15 +164,22 @@ export async function addHuman(firstname: string, lastname: string, birthdate: s
 
 /**
  * Update a human
+ * @param secret        The secret to authorize the operation
  * @param id            The id of the human
  * @param firstname     The first name of the human
  * @param lastname      The last name of the human
  * @param birthdate     The birthdate of the human
  * @returns             The updated human
  */
-export async function updateHuman(id: number, firstname?: string, lastname?: string, birthdate?: string) {
-    const existingHuman = await getHumanById(id);
+export async function updateHuman(secret: string, id: number, firstname?: string, lastname?: string, birthdate?: string) {
+    if (!checkEditSecret(secret)) {
+        throw new ServiceError('Unauthorized', {
+            statusCode: 401,
+            code: 'unauthorized',
+        });
+    }
 
+    const existingHuman = await $getHumanById(id);
     if (!existingHuman) {
         throw new ServiceError('Human does not exist', {
             statusCode: 400,
@@ -151,7 +203,6 @@ export async function updateHuman(id: number, firstname?: string, lastname?: str
                 }
             });
         }
-
     }
 
     try {
@@ -176,13 +227,19 @@ export async function updateHuman(id: number, firstname?: string, lastname?: str
 
 /**
  * Delete a human
- * @param id    The id of the human
- * @returns     The deleted human  
+ * @param secret    The secret to authorize the operation
+ * @param id        The id of the human 
+ * @returns         The deleted human  
  */
-export async function deleteHuman(id: number) {
+export async function deleteHuman(id: number, secret: string) {
+    if (!checkEditSecret(secret)) {
+        throw new ServiceError('Unauthorized', {
+            statusCode: 401,
+            code: 'unauthorized',
+        });
+    }
 
-    const existingHuman = await getHumanById(id);
-
+    const existingHuman = await $getHumanById(id);
     if (!existingHuman) {
         throw new ServiceError('Human does not exist', {
             statusCode: 400,
@@ -192,6 +249,7 @@ export async function deleteHuman(id: number) {
             }
         });
     }
+
     try {
         const [human] = await getDb()
             .delete(humans)
