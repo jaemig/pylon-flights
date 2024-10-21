@@ -71,7 +71,8 @@ export async function getHumans(
                 id: false,
             },
         });
-    } catch {
+    } catch (e) {
+        console.error(e);
         throw new ServiceError('Failed to get humans', {
             statusCode: 400,
             code: 'db_error',
@@ -102,7 +103,8 @@ export async function getHumanByUuid(id: string) {
                 id: false,
             },
         });
-    } catch {
+    } catch (e) {
+        console.error(e);
         throw new ServiceError('Failed to get human', {
             statusCode: 400,
             code: 'db_error',
@@ -176,7 +178,7 @@ export async function addHuman(
             .returning();
         return human;
     } catch (e) {
-        console.log(e);
+        console.error(e);
         throw new ServiceError('Failed to add human', {
             statusCode: 400,
             code: 'db_error',
@@ -251,7 +253,7 @@ export async function updateHuman(
 
         return human;
     } catch (e) {
-        console.log(e);
+        console.error(e);
         throw new ServiceError('Failed to update human', {
             statusCode: 400,
             code: 'db_error',
@@ -292,7 +294,7 @@ export async function deleteHuman(id: number, secret: string) {
 
         return human;
     } catch (e) {
-        console.log(e);
+        console.error(e);
         throw new ServiceError('Failed to delete human', {
             statusCode: 400,
             code: 'db_error',

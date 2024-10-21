@@ -3,6 +3,7 @@ import { SQL, eq, and } from 'drizzle-orm';
 
 import getDb from '../db';
 import { Luggage, luggages } from '../db/schema';
+import { generateUUID } from '../utilts';
 
 /**
  * Get luggages
@@ -83,7 +84,8 @@ export async function getLuggageById(id: number) {
                 },
             },
         });
-    } catch {
+    } catch (e) {
+        console.error(e);
         throw new ServiceError('Failed to get luggage', {
             statusCode: 400,
             code: 'db_error',
@@ -121,12 +123,14 @@ export async function addLuggage(
 
     try {
         return await getDb().insert(luggages).values({
+            uuid: generateUUID(),
             passengerId,
             weight,
             type,
             description: descriptionInput,
         });
-    } catch {
+    } catch (e) {
+        console.error(e);
         throw new ServiceError('Failed to add luggage', {
             statusCode: 400,
             code: 'db_error',
@@ -187,7 +191,8 @@ export async function updateLuggage(
             .set(values)
             .where(eq(luggages.passengerId, passengerId))
             .returning();
-    } catch {
+    } catch (e) {
+        console.error(e);
         throw new ServiceError('Failed to update luggage', {
             statusCode: 400,
             code: 'db_error',

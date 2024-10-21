@@ -67,7 +67,8 @@ export async function getAircrafts(
                 id: false,
             },
         });
-    } catch {
+    } catch (e) {
+        console.error(e);
         throw new ServiceError('Failed to get aircrafts', {
             statusCode: 400,
             code: 'db_error',
@@ -96,7 +97,8 @@ export async function getAircraftById(id: string) {
         return await getDb().query.aircrafts.findFirst({
             where: eq(aircrafts.uuid, id),
         });
-    } catch {
+    } catch (e) {
+        console.error(e);
         throw new ServiceError('Failed to get aircraft', {
             statusCode: 400,
             code: 'db_error',
@@ -168,7 +170,8 @@ export async function addAircraft(secret: string, icao: string, model: string) {
             .returning();
 
         return aircraft;
-    } catch {
+    } catch (e) {
+        console.error(e);
         throw new ServiceError('Failed to add aircraft', {
             statusCode: 400,
             code: 'db_error',
@@ -259,7 +262,8 @@ export async function updateAircraft(
             .returning();
 
         return updatedAircraft;
-    } catch {
+    } catch (e) {
+        console.error(e);
         throw new ServiceError('Failed to update aircraft', {
             statusCode: 400,
             code: 'db_error',
@@ -297,7 +301,8 @@ export async function deleteAircraft(secret: string, id: number) {
             .delete(aircrafts)
             .where(eq(aircrafts.id, id))
             .returning();
-    } catch {
+    } catch (e) {
+        console.error(e);
         throw new ServiceError('Failed to delete aircraft', {
             statusCode: 400,
             code: 'db_error',
