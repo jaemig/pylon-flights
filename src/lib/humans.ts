@@ -10,7 +10,7 @@ import { checkEditSecret, generateUUID, isValidUUID } from "../utilts";
  * @param id    The id of the human
  * @returns     The human or undefined if not found
  */
-async function $getHumanById(id: number) {
+export async function $getHumanById(id: number) {
     try {
         return await getDb().query.humans
             .findFirst({
@@ -153,7 +153,8 @@ export async function addHuman(secret: string, firstname: string, lastname: stri
             })
             .returning();
         return human;
-    } catch {
+    } catch (e) {
+        console.log(e);
         throw new ServiceError('Failed to add human', {
             statusCode: 400,
             code: 'db_error',
@@ -217,7 +218,8 @@ export async function updateHuman(secret: string, id: number, firstname?: string
             .returning();
 
         return human;
-    } catch {
+    } catch (e) {
+        console.log(e);
         throw new ServiceError('Failed to update human', {
             statusCode: 400,
             code: 'db_error',
@@ -257,7 +259,8 @@ export async function deleteHuman(id: number, secret: string) {
             .returning();
 
         return human;
-    } catch {
+    } catch (e) {
+        console.log(e);
         throw new ServiceError('Failed to delete human', {
             statusCode: 400,
             code: 'db_error',
