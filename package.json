@@ -18,7 +18,6 @@
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.4.5",
     "@cloudflare/workers-types": "^4.20240903.0",
-    "@eslint/js": "^9.12.0",
     "@getcronit/pylon-dev": "^1.0.0",
     "drizzle-kit": "^0.26.2",
     "eslint": "^9.12.0",
