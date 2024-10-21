@@ -1,14 +1,36 @@
+import { getEnv, ServiceError } from "@getcronit/pylon";
+import { randomUUID } from "crypto";
+
 import getDb from ".";
+import { aircrafts, airlines, airports, flights, humans, luggages, passengers } from "./schema";
 
 
-export default async function seed() {
+export default async function seed(secret: string) {
+    if (getEnv().SEED_SECRET !== secret) {
+        throw new ServiceError("Invalid seed secret", {
+            statusCode: 401,
+            code: "INVALID_SECRET"
+        });
+    }
     try {
         const db = getDb();
+
+        await db.delete(luggages);
+        await db.delete(passengers);
+        await db.delete(flights);
+        await db.delete(airports);
+        await db.delete(aircrafts);
+        await db.delete(airlines);
+        await db.delete(humans);
+        // Delete all sqlite_sequence entries to reset autoincrement counters
+        await db.run(`
+            DELETE FROM sqlite_sequence
+        `)
 
         /**
          * AIRPORTS
          */
-        const airports = new Map<string, { name: string, country: string }>([
+        const airportItems = new Map<string, { name: string, country: string }>([
             ['KATL', { name: 'Hartsfield-Jackson Atlanta International Airport', country: 'United States' }],
             ['ZBAA', { name: 'Beijing Capital International Airport', country: 'China' }],
             ['EHAM', { name: 'Amsterdam Airport Schiphol', country: 'Netherlands' }],
@@ -100,19 +122,19 @@ export default async function seed() {
             ['RCTP', { name: 'Taiwan Taoyuan International Airport', country: 'Taiwan' }]
         ]);
 
-        const airportValues = Array.from(airports.entries())
-            .map(([id, { name, country }]) => `('${id}', '${name}', '${country}')`)
+        const airportValues = Array.from(airportItems.entries())
+            .map(([id, { name, country }]) => `('${randomUUID()}', '${id}', '${name}', '${country}')`)
             .join(", ");
 
         await db.run(`
-            INSERT INTO airports (id, name, country) VALUES
+            INSERT INTO airports (uuid, icao, name, country) VALUES
             ${airportValues};
         `);
 
         /**
          * AIRCRAFTS
          */
-        const aircrafts = new Map<string, string>([
+        const aircraftItems = new Map<string, string>([
             ['A320', 'Airbus A320'],
             ['B737', 'Boeing 737'],
             ['A380', 'Airbus A380'],
@@ -198,19 +220,19 @@ export default async function seed() {
             ['CL30', 'Bombardier Challenger 300']
         ]);
 
-        const aircraftValues = Array.from(aircrafts.entries())
-            .map(([id, model]) => `('${id}', '${model}')`)
+        const aircraftValues = Array.from(aircraftItems.entries())
+            .map(([id, model]) => `('${randomUUID()}', '${id}', '${model}')`)
             .join(", ");
 
         await db.run(`
-            INSERT INTO aircrafts (id, model) VALUES
+            INSERT INTO aircrafts (uuid, icao, model) VALUES
             ${aircraftValues};
         `);
 
         /**
          * HUMANS
          */
-        const humans = [
+        const humanItems = [
             { firstname: 'John', lastname: 'Doe', birthdate: '1985-06-15' },
             { firstname: 'Jane', lastname: 'Smith', birthdate: '1990-09-20' },
             { firstname: 'Alice', lastname: 'Johnson', birthdate: '1982-12-01' },
@@ -293,19 +315,19 @@ export default async function seed() {
             { firstname: 'Abby', lastname: 'Cruz', birthdate: '1996-04-18' }
         ];
 
-        const humanValues = humans
-            .map(({ firstname, lastname, birthdate }) => `('${firstname}', '${lastname}', '${birthdate}')`)
+        const humanValues = humanItems
+            .map(({ firstname, lastname, birthdate }) => `('${randomUUID()}', '${firstname}', '${lastname}', '${birthdate}')`)
             .join(", ");
 
         await db.run(`
-            INSERT INTO humans (firstname, lastname, birthdate) VALUES
+            INSERT INTO humans (uuid, firstname, lastname, birthdate) VALUES
             ${humanValues};
         `);
 
         /**
          * AIRLINES
          */
-        const airlines = [
+        const airlineItems = [
             'American Airlines',
             'Delta Air Lines',
             'United Airlines',
@@ -408,217 +430,216 @@ export default async function seed() {
             'Air Greenland'
         ];
 
-        const airlineValues = airlines
-            .map(name => `('${name}')`)
+        const airlineValues = airlineItems
+            .map(name => `('${randomUUID()}', '${name}')`)
             .join(", ");
 
         await db.run(`
-            INSERT INTO airlines (name) VALUES
+            INSERT INTO airlines (uuid, name) VALUES
             ${airlineValues};
         `);
 
         /**
          * FLIGHTS
          */
-        const flights = [
+        const flightItems = [
             {
                 flightNumber: 'AA1234',
-                departure: 'KATL',
-                arrival: 'KLAX',
+                departureAirportId: 1, // KATL
+                arrivalAirportId: 2, // KLAX
                 departureTime: '2023-10-01T08:00:00Z',
                 arrivalTime: '2023-10-01T11:00:00Z',
                 pilot: 1,
                 copilot: 2,
                 airline: 1,
                 status: 'scheduled',
-                aircraft: 'A320'
+                aircraftId: 1 // A320
             },
             {
                 flightNumber: 'DL5678',
-                departure: 'EHAM',
-                arrival: 'EGLL',
+                departureAirportId: 3, // EHAM
+                arrivalAirportId: 4, // EGLL
                 departureTime: '2023-10-02T09:00:00Z',
                 arrivalTime: '2023-10-02T10:00:00Z',
                 pilot: 3,
                 copilot: 4,
                 airline: 2,
                 status: 'boarding',
-                aircraft: 'B737'
+                aircraftId: 2 // B737
             },
             {
                 flightNumber: 'UA9101',
-                departure: 'ZBAA',
-                arrival: 'RJTT',
+                departureAirportId: 5, // ZBAA
+                arrivalAirportId: 6, // RJTT
                 departureTime: '2023-10-03T10:00:00Z',
                 arrivalTime: '2023-10-03T14:00:00Z',
                 pilot: 5,
                 copilot: 6,
                 airline: 3,
                 status: 'departed',
-                aircraft: 'A380'
+                aircraftId: 3 // A380
             },
             {
                 flightNumber: 'SW2345',
-                departure: 'LFPG',
-                arrival: 'OMDB',
+                departureAirportId: 7, // LFPG
+                arrivalAirportId: 8, // OMDB
                 departureTime: '2023-10-04T11:00:00Z',
                 arrivalTime: '2023-10-04T15:00:00Z',
                 pilot: 7,
                 copilot: 8,
                 airline: 4,
                 status: 'arrived',
-                aircraft: 'B747'
+                aircraftId: 4 // B747
             },
             {
                 flightNumber: 'LH6789',
-                departure: 'KSFO',
-                arrival: 'CYYZ',
+                departureAirportId: 9, // KSFO
+                arrivalAirportId: 10, // CYYZ
                 departureTime: '2023-10-05T12:00:00Z',
                 arrivalTime: '2023-10-05T16:00:00Z',
                 pilot: 9,
                 copilot: 10,
                 airline: 5,
                 status: 'cancelled',
-                aircraft: 'A321'
+                aircraftId: 5 // A321
             },
             {
                 flightNumber: 'AF3456',
-                departure: 'KJFK',
-                arrival: 'YSSY',
+                departureAirportId: 11, // KJFK
+                arrivalAirportId: 12, // YSSY
                 departureTime: '2023-10-06T13:00:00Z',
                 arrivalTime: '2023-10-07T03:00:00Z',
                 pilot: 11,
                 copilot: 12,
                 airline: 6,
                 status: 'scheduled',
-                aircraft: 'B777'
+                aircraftId: 6 // B777
             },
             {
                 flightNumber: 'BA7890',
-                departure: 'ZSPD',
-                arrival: 'EDDF',
+                departureAirportId: 13, // ZSPD
+                arrivalAirportId: 14, // EDDF
                 departureTime: '2023-10-07T14:00:00Z',
                 arrivalTime: '2023-10-07T18:00:00Z',
                 pilot: 13,
                 copilot: 14,
                 airline: 7,
                 status: 'boarding',
-                aircraft: 'A330'
+                aircraftId: 7 // A330
             },
             {
                 flightNumber: 'EK1234',
-                departure: 'WSSS',
-                arrival: 'VHHH',
+                departureAirportId: 15, // WSSS
+                arrivalAirportId: 16, // VHHH
                 departureTime: '2023-10-08T15:00:00Z',
                 arrivalTime: '2023-10-08T17:00:00Z',
                 pilot: 15,
                 copilot: 16,
                 airline: 8,
                 status: 'departed',
-                aircraft: 'B787'
+                aircraftId: 8 // B787
             },
             {
                 flightNumber: 'QR5678',
-                departure: 'VIDP',
-                arrival: 'LEMD',
+                departureAirportId: 17, // VIDP
+                arrivalAirportId: 18, // LEMD
                 departureTime: '2023-10-09T16:00:00Z',
                 arrivalTime: '2023-10-09T20:00:00Z',
                 pilot: 17,
                 copilot: 18,
                 airline: 9,
                 status: 'arrived',
-                aircraft: 'A350'
+                aircraftId: 9 // A350
             },
             {
                 flightNumber: 'SQ9101',
-                departure: 'EGCC',
-                arrival: 'LSZH',
+                departureAirportId: 19, // EGCC
+                arrivalAirportId: 20, // LSZH
                 departureTime: '2023-10-10T17:00:00Z',
                 arrivalTime: '2023-10-10T19:00:00Z',
                 pilot: 19,
                 copilot: 20,
                 airline: 10,
                 status: 'cancelled',
-                aircraft: 'A380'
+                aircraftId: 3 // A380
             },
             {
                 flightNumber: 'CX2345',
-                departure: 'CYVR',
-                arrival: 'NZAA',
+                departureAirportId: 21, // CYVR
+                arrivalAirportId: 22, // NZAA
                 departureTime: '2023-10-11T18:00:00Z',
                 arrivalTime: '2023-10-12T06:00:00Z',
                 pilot: 21,
                 copilot: 22,
                 airline: 11,
                 status: 'scheduled',
-                aircraft: 'B747'
+                aircraftId: 4 // B747
             },
             {
                 flightNumber: 'JL6789',
-                departure: 'FAOR',
-                arrival: 'RKSI',
+                departureAirportId: 23, // FAOR
+                arrivalAirportId: 24, // RKSI
                 departureTime: '2023-10-12T19:00:00Z',
                 arrivalTime: '2023-10-13T07:00:00Z',
                 pilot: 23,
                 copilot: 24,
                 airline: 12,
                 status: 'boarding',
-                aircraft: 'A350'
+                aircraftId: 9 // A350
             },
             {
                 flightNumber: 'KL3456',
-                departure: 'KORD',
-                arrival: 'MMMX',
+                departureAirportId: 25, // KORD
+                arrivalAirportId: 26, // MMMX
                 departureTime: '2023-10-13T20:00:00Z',
                 arrivalTime: '2023-10-13T23:00:00Z',
                 pilot: 25,
                 copilot: 26,
                 airline: 13,
                 status: 'departed',
-                aircraft: 'B777'
+                aircraftId: 6 // B777
             },
             {
                 flightNumber: 'LH7890',
-                departure: 'LTBA',
-                arrival: 'LEBL',
+                departureAirportId: 27, // LTBA
+                arrivalAirportId: 28, // LEBL
                 departureTime: '2023-10-14T21:00:00Z',
                 arrivalTime: '2023-10-14T23:00:00Z',
                 pilot: 27,
                 copilot: 28,
                 airline: 14,
                 status: 'arrived',
-                aircraft: 'A320'
+                aircraftId: 1 // A320
             },
             {
                 flightNumber: 'AF1234',
-                departure: 'UUEE',
-                arrival: 'BIKF',
+                departureAirportId: 29, // UUEE
+                arrivalAirportId: 30, // BIKF
                 departureTime: '2023-10-15T22:00:00Z',
                 arrivalTime: '2023-10-16T01:00:00Z',
                 pilot: 29,
                 copilot: 30,
                 airline: 15,
                 status: 'cancelled',
-                aircraft: 'B737'
+                aircraftId: 2 // B737
             }
         ];
 
-        const flightValues = flights
-            .map(({ flightNumber, departure, arrival, departureTime, arrivalTime, pilot, copilot, airline, status, aircraft }) =>
-                `('${flightNumber}', '${departure}', '${arrival}', '${departureTime}', '${arrivalTime}', ${pilot}, ${copilot}, ${airline}, '${status}', '${aircraft}')`
+        const flightValues = flightItems
+            .map(({ flightNumber, departureAirportId, arrivalAirportId, departureTime, arrivalTime, pilot, copilot, airline, status, aircraftId }) =>
+                `('${randomUUID()}', '${flightNumber}', '${departureAirportId}', '${arrivalAirportId}', '${departureTime}', '${arrivalTime}', ${pilot}, ${copilot}, ${airline}, '${status}', '${aircraftId}')`
             )
             .join(", ");
 
         await db.run(`
-            INSERT INTO flights (flightNumber, departure, arrival, departureTime, arrivalTime, pilot, copilot, airline, status, aircraft) VALUES
+            INSERT INTO flights (uuid, flightNumber, departureAirportId, arrivalAirportId, departureTime, arrivalTime, pilot, copilot, airline, status, aircraftId) VALUES
             ${flightValues};
         `);
 
         /**
          * PASSENGERS
          */
-
-        const passengers = [
+        const passengerItems = [
             { humanId: 1, seat: '12A', class: 'economy', flightId: 1 },
             { humanId: 2, seat: '12B', class: 'economy', flightId: 1 },
             { humanId: 3, seat: '1A', class: 'first', flightId: 2 },
@@ -699,39 +720,141 @@ export default async function seed() {
             { humanId: 78, seat: '5B', class: 'first', flightId: 9 },
             { humanId: 79, seat: '7A', class: 'business', flightId: 10 },
             { humanId: 80, seat: '7B', class: 'business', flightId: 10 },
-            { humanId: 81, seat: '23A', class: 'economy', flightId: 11 },
-            { humanId: 82, seat: '23B', class: 'economy', flightId: 11 },
-            { humanId: 83, seat: '8A', class: 'first', flightId: 12 },
-            { humanId: 84, seat: '8B', class: 'first', flightId: 12 },
-            { humanId: 85, seat: '10A', class: 'business', flightId: 13 },
-            { humanId: 86, seat: '10B', class: 'business', flightId: 13 },
-            { humanId: 87, seat: '25A', class: 'economy', flightId: 14 },
-            { humanId: 88, seat: '25B', class: 'economy', flightId: 14 },
-            { humanId: 89, seat: '9A', class: 'first', flightId: 15 },
-            { humanId: 90, seat: '9B', class: 'first', flightId: 15 },
-            { humanId: 91, seat: '12A', class: 'economy', flightId: 1 },
-            { humanId: 92, seat: '12B', class: 'economy', flightId: 1 },
-            { humanId: 93, seat: '1A', class: 'first', flightId: 2 },
-            { humanId: 94, seat: '1B', class: 'first', flightId: 2 },
-            { humanId: 95, seat: '5A', class: 'business', flightId: 3 },
-            { humanId: 96, seat: '5B', class: 'business', flightId: 3 },
-            { humanId: 97, seat: '20A', class: 'economy', flightId: 4 },
-            { humanId: 98, seat: '20B', class: 'economy', flightId: 4 },
-            { humanId: 99, seat: '2A', class: 'first', flightId: 5 },
-            { humanId: 100, seat: '2B', class: 'first', flightId: 5 }
+            // { humanId: 81, seat: '23A', class: 'economy', flightId: 11 },
+            // { humanId: 82, seat: '23B', class: 'economy', flightId: 11 },
+            // { humanId: 83, seat: '8A', class: 'first', flightId: 12 },
+            // { humanId: 84, seat: '8B', class: 'first', flightId: 12 },
+            // { humanId: 85, seat: '10A', class: 'business', flightId: 13 },
+            // { humanId: 86, seat: '10B', class: 'business', flightId: 13 },
+            // { humanId: 87, seat: '25A', class: 'economy', flightId: 14 },
+            // { humanId: 88, seat: '25B', class: 'economy', flightId: 14 },
+            // { humanId: 89, seat: '9A', class: 'first', flightId: 15 },
+            // { humanId: 90, seat: '9B', class: 'first', flightId: 15 },
+            // { humanId: 91, seat: '12A', class: 'economy', flightId: 1 },
+            // { humanId: 92, seat: '12B', class: 'economy', flightId: 1 },
+            // { humanId: 93, seat: '1A', class: 'first', flightId: 2 },
+            // { humanId: 94, seat: '1B', class: 'first', flightId: 2 },
+            // { humanId: 95, seat: '5A', class: 'business', flightId: 3 },
+            // { humanId: 96, seat: '5B', class: 'business', flightId: 3 },
+            // { humanId: 97, seat: '20A', class: 'economy', flightId: 4 },
+            // { humanId: 98, seat: '20B', class: 'economy', flightId: 4 },
+            // { humanId: 99, seat: '2A', class: 'first', flightId: 5 },
+            // { humanId: 100, seat: '2B', class: 'first', flightId: 5 }
         ];
 
-        const passengerValues = passengers
-            .map(({ humanId, seat, class: seatClass, flightId }) => `(${humanId}, '${seat}', '${seatClass}', ${flightId})`)
+        const passengerValues = passengerItems
+            .map(({ humanId, seat, class: seatClass, flightId }) => `('${randomUUID()}', ${humanId}, '${seat}', '${seatClass}', ${flightId})`)
             .join(", ");
 
         await db.run(`
-            INSERT INTO passengers (humanId, seat, class, flightId) VALUES
+            INSERT INTO passengers (uuid, humanId, seat, class, flightId) VALUES
             ${passengerValues};
         `);
 
+        /**
+         * LUGGAGES
+         */
+        const luggageItems = [
+            { passengerId: 1, weight: 15, type: 'hand', description: 'Black carry-on suitcase' },
+            { passengerId: 2, weight: 25, type: 'checked', description: 'Large blue suitcase' },
+            { passengerId: 3, weight: 12, type: 'hand', description: 'Grey backpack with electronics' },
+            { passengerId: 1, weight: 28, type: 'checked', description: 'Red checked luggage' },
+            { passengerId: 4, weight: 20, type: 'checked', description: 'Green hard-shell suitcase' },
+            { passengerId: 5, weight: 8, type: 'hand', description: 'Small duffel bag' },
+            { passengerId: 6, weight: 18, type: 'hand', description: 'Brown leather briefcase' },
+            { passengerId: 7, weight: 22, type: 'checked', description: 'Black large suitcase' },
+            { passengerId: 8, weight: 10, type: 'hand', description: 'White canvas tote bag' },
+            { passengerId: 9, weight: 30, type: 'checked', description: 'Oversized orange suitcase' },
+            { passengerId: 10, weight: 5, type: 'hand', description: 'Blue gym bag' },
+            { passengerId: 11, weight: 12, type: 'hand', description: 'Pink backpack with flowers' },
+            { passengerId: 12, weight: 35, type: 'checked', description: 'Gray oversized luggage' },
+            { passengerId: 13, weight: 17, type: 'hand', description: 'Black leather duffel' },
+            { passengerId: 14, weight: 20, type: 'checked', description: 'White suitcase with stickers' },
+            { passengerId: 15, weight: 9, type: 'hand', description: 'Small green backpack' },
+            { passengerId: 16, weight: 15, type: 'hand', description: 'Black carry-on with laptop' },
+            { passengerId: 17, weight: 40, type: 'checked', description: 'Blue oversized luggage' },
+            { passengerId: 18, weight: 7, type: 'hand', description: 'Purple duffel bag' },
+            { passengerId: 19, weight: 22, type: 'checked', description: 'Large pink suitcase' },
+            { passengerId: 20, weight: 11, type: 'hand', description: 'Orange carry-on' },
+            { passengerId: 21, weight: 28, type: 'checked', description: 'Green large suitcase' },
+            { passengerId: 22, weight: 13, type: 'hand', description: 'Black rolling suitcase' },
+            { passengerId: 23, weight: 35, type: 'checked', description: 'Yellow oversized luggage' },
+            { passengerId: 24, weight: 19, type: 'checked', description: 'Dark red suitcase' },
+            { passengerId: 25, weight: 7, type: 'hand', description: 'Black duffel with shoes' },
+            { passengerId: 26, weight: 10, type: 'hand', description: 'Blue carry-on suitcase' },
+            { passengerId: 27, weight: 38, type: 'checked', description: 'Extra-large silver suitcase' },
+            { passengerId: 28, weight: 5, type: 'hand', description: 'Yellow backpack with books' },
+            { passengerId: 29, weight: 22, type: 'checked', description: 'Medium brown suitcase' },
+            { passengerId: 30, weight: 14, type: 'hand', description: 'White leather briefcase' },
+            { passengerId: 31, weight: 29, type: 'checked', description: 'Blue hard-shell luggage' },
+            { passengerId: 32, weight: 16, type: 'hand', description: 'Green rolling suitcase' },
+            { passengerId: 33, weight: 20, type: 'checked', description: 'Large yellow suitcase' },
+            { passengerId: 34, weight: 10, type: 'hand', description: 'Black leather carry-on' },
+            { passengerId: 35, weight: 32, type: 'checked', description: 'Brown hard-shell luggage' },
+            { passengerId: 36, weight: 18, type: 'hand', description: 'Silver carry-on suitcase' },
+            { passengerId: 37, weight: 40, type: 'checked', description: 'Large purple suitcase' },
+            { passengerId: 38, weight: 8, type: 'hand', description: 'Red backpack with straps' },
+            { passengerId: 39, weight: 21, type: 'checked', description: 'Black large suitcase' },
+            { passengerId: 40, weight: 12, type: 'hand', description: 'Pink duffel with flowers' },
+            { passengerId: 41, weight: 33, type: 'checked', description: 'Gray oversized luggage' },
+            { passengerId: 42, weight: 15, type: 'hand', description: 'Blue carry-on suitcase' },
+            { passengerId: 43, weight: 25, type: 'checked', description: 'Green checked luggage' },
+            { passengerId: 44, weight: 19, type: 'hand', description: 'Black rolling suitcase' },
+            { passengerId: 45, weight: 37, type: 'checked', description: 'Large silver suitcase' },
+            { passengerId: 46, weight: 6, type: 'hand', description: 'Orange backpack' },
+            { passengerId: 47, weight: 27, type: 'checked', description: 'White oversized suitcase' },
+            { passengerId: 48, weight: 14, type: 'hand', description: 'Black briefcase' },
+            { passengerId: 49, weight: 39, type: 'checked', description: 'Extra-large black suitcase' },
+            { passengerId: 50, weight: 5, type: 'hand', description: 'Yellow gym bag' },
+            { passengerId: 51, weight: 23, type: 'checked', description: 'Brown large suitcase' },
+            { passengerId: 52, weight: 9, type: 'hand', description: 'Black duffel with camera' },
+            { passengerId: 53, weight: 32, type: 'checked', description: 'Blue hard-shell suitcase' },
+            { passengerId: 54, weight: 16, type: 'hand', description: 'Red rolling suitcase' },
+            { passengerId: 55, weight: 20, type: 'checked', description: 'Green oversized luggage' },
+            { passengerId: 56, weight: 11, type: 'hand', description: 'White leather backpack' },
+            { passengerId: 57, weight: 34, type: 'checked', description: 'Black large suitcase' },
+            { passengerId: 58, weight: 8, type: 'hand', description: 'Blue duffel with clothes' },
+            { passengerId: 59, weight: 38, type: 'checked', description: 'Yellow oversized suitcase' },
+            { passengerId: 60, weight: 12, type: 'hand', description: 'Black carry-on with books' },
+            { passengerId: 61, weight: 24, type: 'checked', description: 'Purple hard-shell suitcase' },
+            { passengerId: 62, weight: 14, type: 'hand', description: 'Pink leather backpack' },
+            { passengerId: 63, weight: 21, type: 'checked', description: 'Large gray suitcase' },
+            { passengerId: 64, weight: 19, type: 'hand', description: 'Black carry-on with charger' },
+            { passengerId: 65, weight: 36, type: 'checked', description: 'Extra-large green suitcase' },
+            { passengerId: 66, weight: 6, type: 'hand', description: 'Orange tote bag' },
+            { passengerId: 67, weight: 25, type: 'checked', description: 'Blue oversized suitcase' },
+            { passengerId: 68, weight: 10, type: 'hand', description: 'Small green backpack' },
+            { passengerId: 69, weight: 15, type: 'hand', description: 'Black carry-on suitcase' },
+            { passengerId: 70, weight: 40, type: 'checked', description: 'Large white suitcase' },
+            { passengerId: 71, weight: 8, type: 'hand', description: 'Gray backpack with essentials' },
+            { passengerId: 72, weight: 30, type: 'checked', description: 'Large red suitcase' },
+            { passengerId: 73, weight: 20, type: 'hand', description: 'Black carry-on with laptop' },
+            { passengerId: 74, weight: 26, type: 'checked', description: 'Blue oversized luggage' },
+            { passengerId: 75, weight: 12, type: 'hand', description: 'Yellow backpack with straps' },
+            { passengerId: 76, weight: 15, type: 'hand', description: 'Orange carry-on suitcase' },
+            { passengerId: 77, weight: 18, type: 'hand', description: 'Black rolling suitcase' },
+            { passengerId: 78, weight: 35, type: 'checked', description: 'Large purple suitcase' },
+            { passengerId: 79, weight: 6, type: 'hand', description: 'White leather carry-on' },
+        ];
+
+        const luggageValues = luggageItems.map(luggage => `('${randomUUID()}', ${luggage.passengerId}, ${luggage.weight}, '${luggage.type}', '${luggage.description}')`).join(", ");
+
+        await db.run(`
+            INSERT INTO luggages (uuid, passengerId, weight, type, description) VALUES
+            ${luggageValues};
+        `);
+
         return true;
-    } catch {
-        return false;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (e: any) {
+        console.error(e);
+        throw new ServiceError(e.message, {
+            statusCode: 500,
+            code: 'DATABASE_ERROR',
+            details: {
+                message: e.message,
+                stack: e.stack
+            }
+        });
     }
 }
