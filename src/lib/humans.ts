@@ -1,9 +1,9 @@
-import { and, eq, like, SQL } from "drizzle-orm";
-import { ServiceError } from "@getcronit/pylon";
+import { and, eq, like, SQL } from 'drizzle-orm';
+import { ServiceError } from '@getcronit/pylon';
 
-import getDb from "../db";
-import { humans } from "../db/schema";
-import { checkEditSecret, generateUUID, isValidUUID } from "../utilts";
+import getDb from '../db';
+import { humans } from '../db/schema';
+import { checkEditSecret, generateUUID, isValidUUID } from '../utilts';
 
 /**
  * Get human by id
@@ -12,10 +12,9 @@ import { checkEditSecret, generateUUID, isValidUUID } from "../utilts";
  */
 export async function $getHumanById(id: number) {
     try {
-        return await getDb().query.humans
-            .findFirst({
-                where: eq(humans.id, id),
-            });
+        return await getDb().query.humans.findFirst({
+            where: eq(humans.id, id),
+        });
     } catch {
         throw new ServiceError('Failed to get human', {
             statusCode: 400,
@@ -30,23 +29,38 @@ export async function $getHumanById(id: number) {
  * @param skip  The number of humans to skip
  * @returns     Array of humans
  */
-export async function getHumans(firstname?: string, lastname?: string, birthdate?: string, take?: number, skip?: number) {
+export async function getHumans(
+    firstname?: string,
+    lastname?: string,
+    birthdate?: string,
+    take?: number,
+    skip?: number,
+) {
     if ((take !== undefined && take < 0) || (skip !== undefined && skip < 0)) {
         throw new ServiceError('Invalid pagination', {
             statusCode: 400,
             code: 'invalid_pagination',
             details: {
                 take,
-                skip
-            }
+                skip,
+            },
         });
     }
 
     const conditions: SQL[] = [];
 
-    if (firstname) conditions.push(like(humans.firstname, `${firstname.trim().toLocaleLowerCase()}%`));
-    if (lastname) conditions.push(like(humans.lastname, `${lastname.trim().toLocaleLowerCase()}%`));
-    if (birthdate) conditions.push(like(humans.birthdate, `${birthdate.trim().toLocaleLowerCase()}%`));
+    if (firstname)
+        conditions.push(
+            like(humans.firstname, `${firstname.trim().toLocaleLowerCase()}%`),
+        );
+    if (lastname)
+        conditions.push(
+            like(humans.lastname, `${lastname.trim().toLocaleLowerCase()}%`),
+        );
+    if (birthdate)
+        conditions.push(
+            like(humans.birthdate, `${birthdate.trim().toLocaleLowerCase()}%`),
+        );
 
     try {
         return await getDb().query.humans.findMany({
@@ -55,7 +69,7 @@ export async function getHumans(firstname?: string, lastname?: string, birthdate
             where: conditions.length > 0 ? and(...conditions) : undefined, // Use `and` only if there are conditions
             columns: {
                 id: false,
-            }
+            },
         });
     } catch {
         throw new ServiceError('Failed to get humans', {
@@ -76,19 +90,18 @@ export async function getHumanByUuid(id: string) {
             statusCode: 400,
             code: 'invalid_uuid',
             details: {
-                id
-            }
+                id,
+            },
         });
     }
 
     try {
-        return await getDb().query.humans
-            .findFirst({
-                where: eq(humans.uuid, id),
-                columns: {
-                    id: false,
-                }
-            });
+        return await getDb().query.humans.findFirst({
+            where: eq(humans.uuid, id),
+            columns: {
+                id: false,
+            },
+        });
     } catch {
         throw new ServiceError('Failed to get human', {
             statusCode: 400,
@@ -105,7 +118,12 @@ export async function getHumanByUuid(id: string) {
  * @param birthdate     The birthdate of the human
  * @returns             The added human
  */
-export async function addHuman(secret: string, firstname: string, lastname: string, birthdate: string) {
+export async function addHuman(
+    secret: string,
+    firstname: string,
+    lastname: string,
+    birthdate: string,
+) {
     if (!checkEditSecret(secret)) {
         throw new ServiceError('Unauthorized', {
             statusCode: 401,
@@ -114,14 +132,19 @@ export async function addHuman(secret: string, firstname: string, lastname: stri
     }
 
     const birthdateParts = birthdate.split('-');
-    if (birthdateParts.length !== 3 || birthdateParts[0].length !== 4 || birthdateParts[1].length !== 2 || birthdateParts[2].length !== 2) {
+    if (
+        birthdateParts.length !== 3 ||
+        birthdateParts[0].length !== 4 ||
+        birthdateParts[1].length !== 2 ||
+        birthdateParts[2].length !== 2
+    ) {
         throw new ServiceError('Invalid birthdate', {
             statusCode: 400,
             code: 'invalid_birthdate',
             details: {
                 birthdate,
-                format: 'YYYY-MM-DD'
-            }
+                format: 'YYYY-MM-DD',
+            },
         });
     }
 
@@ -141,7 +164,6 @@ export async function addHuman(secret: string, firstname: string, lastname: stri
         });
     }
 
-
     try {
         const [human] = await getDb()
             .insert(humans)
@@ -149,7 +171,7 @@ export async function addHuman(secret: string, firstname: string, lastname: stri
                 uuid: generateUUID(),
                 firstname: firstnameInput,
                 lastname: lastnameInput,
-                birthdate
+                birthdate,
             })
             .returning();
         return human;
@@ -160,7 +182,6 @@ export async function addHuman(secret: string, firstname: string, lastname: stri
             code: 'db_error',
         });
     }
-
 }
 
 /**
@@ -172,7 +193,13 @@ export async function addHuman(secret: string, firstname: string, lastname: stri
  * @param birthdate     The birthdate of the human
  * @returns             The updated human
  */
-export async function updateHuman(secret: string, id: number, firstname?: string, lastname?: string, birthdate?: string) {
+export async function updateHuman(
+    secret: string,
+    id: number,
+    firstname?: string,
+    lastname?: string,
+    birthdate?: string,
+) {
     if (!checkEditSecret(secret)) {
         throw new ServiceError('Unauthorized', {
             statusCode: 401,
@@ -186,22 +213,27 @@ export async function updateHuman(secret: string, id: number, firstname?: string
             statusCode: 400,
             code: 'human_does_not_exist',
             details: {
-                id
-            }
+                id,
+            },
         });
     }
 
     if (birthdate) {
         const birthdateParts = birthdate.split('-');
 
-        if (birthdateParts.length !== 3 || birthdateParts[0].length !== 4 || birthdateParts[1].length !== 2 || birthdateParts[2].length !== 2) {
+        if (
+            birthdateParts.length !== 3 ||
+            birthdateParts[0].length !== 4 ||
+            birthdateParts[1].length !== 2 ||
+            birthdateParts[2].length !== 2
+        ) {
             throw new ServiceError('Invalid birthdate', {
                 statusCode: 400,
                 code: 'invalid_birthdate',
                 details: {
                     birthdate,
-                    format: 'YYYY-MM-DD'
-                }
+                    format: 'YYYY-MM-DD',
+                },
             });
         }
     }
@@ -212,7 +244,7 @@ export async function updateHuman(secret: string, id: number, firstname?: string
             .set({
                 firstname,
                 lastname,
-                birthdate
+                birthdate,
             })
             .where(eq(humans.id, id))
             .returning();
@@ -230,8 +262,8 @@ export async function updateHuman(secret: string, id: number, firstname?: string
 /**
  * Delete a human
  * @param secret    The secret to authorize the operation
- * @param id        The id of the human 
- * @returns         The deleted human  
+ * @param id        The id of the human
+ * @returns         The deleted human
  */
 export async function deleteHuman(id: number, secret: string) {
     if (!checkEditSecret(secret)) {
@@ -247,8 +279,8 @@ export async function deleteHuman(id: number, secret: string) {
             statusCode: 400,
             code: 'human_does_not_exist',
             details: {
-                id
-            }
+                id,
+            },
         });
     }
 

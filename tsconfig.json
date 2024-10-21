@@ -1,4 +1,4 @@
 {
-  "extends": "@getcronit/pylon/tsconfig.pylon.json",
-  "include": ["pylon.d.ts", "worker-configuration.d.ts", "src/**/*.ts"]
+    "extends": "@getcronit/pylon/tsconfig.pylon.json",
+    "include": ["pylon.d.ts", "worker-configuration.d.ts", "src/**/*.ts"]
 }

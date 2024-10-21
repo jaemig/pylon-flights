@@ -1,8 +1,8 @@
-import { ServiceError } from "@getcronit/pylon";
-import { SQL, eq, and } from "drizzle-orm";
+import { ServiceError } from '@getcronit/pylon';
+import { SQL, eq, and } from 'drizzle-orm';
 
-import getDb from "../db";
-import { Luggage, luggages } from "../db/schema";
+import getDb from '../db';
+import { Luggage, luggages } from '../db/schema';
 
 /**
  * Get luggages
@@ -12,15 +12,20 @@ import { Luggage, luggages } from "../db/schema";
  * @param type          The luggage type
  * @returns             The list of luggages
  */
-export async function getLuggages(take?: number, skip?: number, passengerId?: number, type?: Luggage['type']) {
+export async function getLuggages(
+    take?: number,
+    skip?: number,
+    passengerId?: number,
+    type?: Luggage['type'],
+) {
     if ((take !== undefined && take < 0) || (skip !== undefined && skip < 0)) {
         throw new ServiceError('Invalid pagination', {
             statusCode: 400,
             code: 'invalid_pagination',
             details: {
                 take,
-                skip
-            }
+                skip,
+            },
         });
     }
 
@@ -38,9 +43,9 @@ export async function getLuggages(take?: number, skip?: number, passengerId?: nu
                 passenger: {
                     with: {
                         human: true,
-                    }
-                }
-            }
+                    },
+                },
+            },
         });
     } catch (e) {
         console.error(e);
@@ -62,8 +67,8 @@ export async function getLuggageById(id: number) {
             statusCode: 400,
             code: 'invalid_id',
             details: {
-                id
-            }
+                id,
+            },
         });
     }
 
@@ -74,9 +79,9 @@ export async function getLuggageById(id: number) {
                 passenger: {
                     with: {
                         human: true,
-                    }
-                }
-            }
+                    },
+                },
+            },
         });
     } catch {
         throw new ServiceError('Failed to get luggage', {
@@ -94,7 +99,12 @@ export async function getLuggageById(id: number) {
  * @param description   The luggage description
  * @returns             The added luggage
  */
-export async function addLuggage(passengerId: number, weight: number, type: Luggage['type'], description: string) {
+export async function addLuggage(
+    passengerId: number,
+    weight: number,
+    type: Luggage['type'],
+    description: string,
+) {
     const descriptionInput = description.trim();
     if (passengerId <= 0 || weight <= 0 || !descriptionInput) {
         throw new ServiceError('Invalid luggage data', {
@@ -104,8 +114,8 @@ export async function addLuggage(passengerId: number, weight: number, type: Lugg
                 passengerId,
                 weight,
                 type,
-                description
-            }
+                description,
+            },
         });
     }
 
@@ -132,7 +142,12 @@ export async function addLuggage(passengerId: number, weight: number, type: Lugg
  * @param description   The luggage description
  * @returns             The updated luggage
  */
-export async function updateLuggage(passengerId: number, weight?: number, type?: "hand" | "checked", description?: string) {
+export async function updateLuggage(
+    passengerId: number,
+    weight?: number,
+    type?: 'hand' | 'checked',
+    description?: string,
+) {
     if (passengerId <= 0) {
         throw new ServiceError('Invalid luggage data', {
             statusCode: 400,
@@ -141,8 +156,8 @@ export async function updateLuggage(passengerId: number, weight?: number, type?:
                 passengerId,
                 weight,
                 type,
-                description
-            }
+                description,
+            },
         });
     }
 
@@ -159,15 +174,19 @@ export async function updateLuggage(passengerId: number, weight?: number, type?:
                     passengerId,
                     weight,
                     type,
-                    description
-                }
+                    description,
+                },
             });
         }
         values.description = descriptionInput;
     }
 
     try {
-        return await getDb().update(luggages).set(values).where(eq(luggages.passengerId, passengerId)).returning();
+        return await getDb()
+            .update(luggages)
+            .set(values)
+            .where(eq(luggages.passengerId, passengerId))
+            .returning();
     } catch {
         throw new ServiceError('Failed to update luggage', {
             statusCode: 400,

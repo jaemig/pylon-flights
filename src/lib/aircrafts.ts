@@ -1,9 +1,9 @@
-import { ServiceError } from "@getcronit/pylon";
-import { eq, like } from "drizzle-orm";
+import { ServiceError } from '@getcronit/pylon';
+import { eq, like } from 'drizzle-orm';
 
-import getDb from "../db";
-import { aircrafts } from "../db/schema";
-import { checkEditSecret, generateUUID, isValidUUID } from "../utilts";
+import getDb from '../db';
+import { aircrafts } from '../db/schema';
+import { checkEditSecret, generateUUID, isValidUUID } from '../utilts';
 
 /**
  * Get aircraft by id
@@ -11,8 +11,8 @@ import { checkEditSecret, generateUUID, isValidUUID } from "../utilts";
  * @returns     The aircraft, or undefined if not found
  */
 async function $getAircraftById(id: number) {
-    return await getDb().query.aircrafts
-        .findFirst({
+    return await getDb()
+        .query.aircrafts.findFirst({
             where: eq(aircrafts.id, id),
         })
         .catch(() => undefined);
@@ -24,8 +24,8 @@ async function $getAircraftById(id: number) {
  * @returns     The aircraft
  */
 async function $getAircraftByICAO(icao: string) {
-    return await getDb().query.aircrafts
-        .findFirst({
+    return await getDb()
+        .query.aircrafts.findFirst({
             where: eq(aircrafts.icao, icao),
         })
         .catch(() => undefined);
@@ -38,15 +38,19 @@ async function $getAircraftByICAO(icao: string) {
  * @param skip  The number of aircrafts to skip
  * @returns     Array of aircrafts
  */
-export async function getAircrafts(model?: string, take?: number, skip?: number) {
+export async function getAircrafts(
+    model?: string,
+    take?: number,
+    skip?: number,
+) {
     if ((take !== undefined && take < 0) || (skip !== undefined && skip < 0)) {
         throw new ServiceError('Invalid pagination', {
             statusCode: 400,
             code: 'invalid_pagination',
             details: {
                 take,
-                skip
-            }
+                skip,
+            },
         });
     }
 
@@ -55,10 +59,13 @@ export async function getAircrafts(model?: string, take?: number, skip?: number)
         return await getDb().query.aircrafts.findMany({
             limit: take ?? 20,
             offset: skip,
-            where: filterModel || false ? like(aircrafts.model, `${filterModel}%`) : undefined,
+            where:
+                filterModel || false
+                    ? like(aircrafts.model, `${filterModel}%`)
+                    : undefined,
             columns: {
                 id: false,
-            }
+            },
         });
     } catch {
         throw new ServiceError('Failed to get aircrafts', {
@@ -80,16 +87,15 @@ export async function getAircraftById(id: string) {
             code: 'invalid_aircraft_id',
             details: {
                 id,
-                description: 'The aircraft id must be a valid UUID'
-            }
+                description: 'The aircraft id must be a valid UUID',
+            },
         });
     }
 
     try {
-        return await getDb().query.aircrafts
-            .findFirst({
-                where: eq(aircrafts.uuid, id)
-            });
+        return await getDb().query.aircrafts.findFirst({
+            where: eq(aircrafts.uuid, id),
+        });
     } catch {
         throw new ServiceError('Failed to get aircraft', {
             statusCode: 400,
@@ -121,8 +127,8 @@ export async function addAircraft(secret: string, icao: string, model: string) {
             details: {
                 icao,
                 expectedLength: 4,
-                description: 'The ICAO code must be 4 characters long'
-            }
+                description: 'The ICAO code must be 4 characters long',
+            },
         });
     }
 
@@ -133,8 +139,8 @@ export async function addAircraft(secret: string, icao: string, model: string) {
             code: 'invalid_aircraft_model',
             details: {
                 model,
-                description: 'The aircraft model must not be empty'
-            }
+                description: 'The aircraft model must not be empty',
+            },
         });
     }
 
@@ -145,8 +151,9 @@ export async function addAircraft(secret: string, icao: string, model: string) {
             code: 'aircraft_exists',
             details: {
                 icao,
-                description: 'An aircraft with the same ICAO code already exists'
-            }
+                description:
+                    'An aircraft with the same ICAO code already exists',
+            },
         });
     }
 
@@ -177,7 +184,12 @@ export async function addAircraft(secret: string, icao: string, model: string) {
  * @param model     The model name of the aircraft
  * @returns         The updated aircraft
  */
-export async function updateAircraft(secret: string, id: number, icao?: string, model?: string) {
+export async function updateAircraft(
+    secret: string,
+    id: number,
+    icao?: string,
+    model?: string,
+) {
     if (!checkEditSecret(secret)) {
         throw new ServiceError('Unauthorized', {
             statusCode: 401,
@@ -194,8 +206,9 @@ export async function updateAircraft(secret: string, id: number, icao?: string, 
                 details: {
                     icao,
                     expectedLength: 4,
-                    description: 'The aircraft id must follow the ICAO code format'
-                }
+                    description:
+                        'The aircraft id must follow the ICAO code format',
+                },
             });
         }
         const existingAircraft = await $getAircraftByICAO(icaoInput);
@@ -205,8 +218,9 @@ export async function updateAircraft(secret: string, id: number, icao?: string, 
                 code: 'aircraft_exists',
                 details: {
                     icao: icaoInput,
-                    description: 'An aircraft with the same ICAO code already exists'
-                }
+                    description:
+                        'An aircraft with the same ICAO code already exists',
+                },
             });
         }
     }
@@ -217,8 +231,8 @@ export async function updateAircraft(secret: string, id: number, icao?: string, 
             statusCode: 404,
             code: 'aircraft_not_found',
             details: {
-                id
-            }
+                id,
+            },
         });
     }
 
@@ -229,8 +243,8 @@ export async function updateAircraft(secret: string, id: number, icao?: string, 
             code: 'invalid_aircraft_model',
             details: {
                 model,
-                description: 'The aircraft model must not be empty'
-            }
+                description: 'The aircraft model must not be empty',
+            },
         });
     }
 
@@ -273,13 +287,16 @@ export async function deleteAircraft(secret: string, id: number) {
             statusCode: 404,
             code: 'aircraft_not_found',
             details: {
-                id
-            }
+                id,
+            },
         });
     }
 
     try {
-        return await getDb().delete(aircrafts).where(eq(aircrafts.id, id)).returning();
+        return await getDb()
+            .delete(aircrafts)
+            .where(eq(aircrafts.id, id))
+            .returning();
     } catch {
         throw new ServiceError('Failed to delete aircraft', {
             statusCode: 400,

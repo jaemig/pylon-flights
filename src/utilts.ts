@@ -7,7 +7,7 @@ import { randomUUID } from 'crypto';
  */
 export const isValidUUID = (uuid: string) => {
     return /^[a-f\d]{8}(-[a-f\d]{4}){4}[a-f\d]{8}$/i.test(uuid);
-}
+};
 
 /**
  * Generate a new UUID
@@ -16,7 +16,7 @@ export const isValidUUID = (uuid: string) => {
 export const generateUUID = () => {
     //* We provide a custom generate function to make it easier when switching to a different UUID generation library
     return randomUUID();
-}
+};
 
 /**
  * Check if the given secret is the edit secret
@@ -25,4 +25,4 @@ export const generateUUID = () => {
  */
 export const checkEditSecret = (secret: string) => {
     return getEnv().EDIT_SECRET === secret;
-}
+};

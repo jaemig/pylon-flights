@@ -1,10 +1,10 @@
-import { and, eq, like, SQL } from "drizzle-orm";
-import { ServiceError } from "@getcronit/pylon";
+import { and, eq, like, SQL } from 'drizzle-orm';
+import { ServiceError } from '@getcronit/pylon';
 
-import getDb from "../db";
-import { Passenger, passengers } from "../db/schema";
-import { $getHumanById } from "./humans";
-import { checkEditSecret, generateUUID, isValidUUID } from "../utilts";
+import getDb from '../db';
+import { Passenger, passengers } from '../db/schema';
+import { $getHumanById } from './humans';
+import { checkEditSecret, generateUUID, isValidUUID } from '../utilts';
 
 /**
  * Get passenger by id (internal)
@@ -12,8 +12,8 @@ import { checkEditSecret, generateUUID, isValidUUID } from "../utilts";
  * @returns     The passenger or undefined if not found
  */
 async function $getPassengerById(id: number) {
-    return await getDb().query.passengers
-        .findFirst({
+    return await getDb()
+        .query.passengers.findFirst({
             where: eq(passengers.id, id),
         })
         .catch(() => undefined);
@@ -26,12 +26,12 @@ async function $getPassengerById(id: number) {
  * @returns         The passenger or undefined if not found
  */
 async function $getPassengerBySeat(flightId: number, seat: string) {
-    return await getDb().query.passengers
-        .findFirst({
+    return await getDb()
+        .query.passengers.findFirst({
             where: and(
                 eq(passengers.flightId, flightId),
-                eq(passengers.seat, seat)
-            )
+                eq(passengers.seat, seat),
+            ),
         })
         .catch(() => undefined);
 }
@@ -43,12 +43,12 @@ async function $getPassengerBySeat(flightId: number, seat: string) {
  * @returns         The passenger or undefined if not found
  */
 async function $getPassengerByFlightId(flightId: number, humanId: number) {
-    return await getDb().query.passengers
-        .findFirst({
+    return await getDb()
+        .query.passengers.findFirst({
             where: and(
                 eq(passengers.flightId, flightId),
-                eq(passengers.humanId, humanId)
-            )
+                eq(passengers.humanId, humanId),
+            ),
         })
         .catch(() => undefined);
 }
@@ -62,21 +62,30 @@ async function $getPassengerByFlightId(flightId: number, humanId: number) {
  * @param skip      The number of passengers to skip
  * @returns         Array of passengers
  */
-export async function getPassengers(seat?: string, seatClass?: Passenger['class'], flightId?: number, take?: number, skip?: number) {
+export async function getPassengers(
+    seat?: string,
+    seatClass?: Passenger['class'],
+    flightId?: number,
+    take?: number,
+    skip?: number,
+) {
     if ((take !== undefined && take < 0) || (skip !== undefined && skip < 0)) {
         throw new ServiceError('Invalid pagination', {
             statusCode: 400,
             code: 'invalid_pagination',
             details: {
                 take,
-                skip
-            }
+                skip,
+            },
         });
     }
 
     const conditions: SQL[] = [];
 
-    if (seat) conditions.push(like(passengers.seat, `${seat.trim().toLocaleLowerCase()}%`));
+    if (seat)
+        conditions.push(
+            like(passengers.seat, `${seat.trim().toLocaleLowerCase()}%`),
+        );
     if (seatClass) conditions.push(eq(passengers.class, seatClass));
     if (flightId) conditions.push(eq(passengers.flightId, flightId));
 
@@ -91,7 +100,7 @@ export async function getPassengers(seat?: string, seatClass?: Passenger['class'
             },
             columns: {
                 id: false,
-            }
+            },
         });
     } catch (e) {
         console.error(e);
@@ -124,7 +133,7 @@ export async function getPassengerById(id: string) {
             },
             columns: {
                 id: false,
-            }
+            },
         });
     } catch (e) {
         console.log(e);
@@ -144,11 +153,17 @@ export async function getPassengerById(id: string) {
  * @param flightId  The id of the flight
  * @returns         The passenger
  */
-export async function addPassenger(secret: string, humanId: number, seat: string, seatClass: Passenger['class'], flightId: number) {
+export async function addPassenger(
+    secret: string,
+    humanId: number,
+    seat: string,
+    seatClass: Passenger['class'],
+    flightId: number,
+) {
     if (!checkEditSecret(secret)) {
-        throw new ServiceError("Unauthorized", {
+        throw new ServiceError('Unauthorized', {
             statusCode: 401,
-            code: "unauthorized"
+            code: 'unauthorized',
         });
     }
 
@@ -159,12 +174,15 @@ export async function addPassenger(secret: string, humanId: number, seat: string
             code: 'seat_taken',
             details: {
                 flightId,
-                seat
-            }
+                seat,
+            },
         });
     }
 
-    const isPassengerOnFlight = !!(await $getPassengerByFlightId(flightId, humanId));
+    const isPassengerOnFlight = !!(await $getPassengerByFlightId(
+        flightId,
+        humanId,
+    ));
     if (isPassengerOnFlight) {
         throw new ServiceError('Human is already on the flight', {
             statusCode: 400,
@@ -172,7 +190,7 @@ export async function addPassenger(secret: string, humanId: number, seat: string
             details: {
                 flightId,
                 humanId,
-            }
+            },
         });
     }
 
@@ -182,8 +200,8 @@ export async function addPassenger(secret: string, humanId: number, seat: string
             statusCode: 404,
             code: 'human_not_found',
             details: {
-                humanId
-            }
+                humanId,
+            },
         });
     }
 
@@ -209,7 +227,14 @@ export async function addPassenger(secret: string, humanId: number, seat: string
  * @param flightId  The id of the flight
  * @returns         The updated passenger
  */
-export async function updatePassenger(secret: string, id: number, humanId?: number, seat?: string, seatClass?: Passenger['class'], flightId?: number) {
+export async function updatePassenger(
+    secret: string,
+    id: number,
+    humanId?: number,
+    seat?: string,
+    seatClass?: Passenger['class'],
+    flightId?: number,
+) {
     if (!checkEditSecret(secret)) {
         throw new ServiceError('Unauthorized', {
             statusCode: 401,
@@ -223,27 +248,33 @@ export async function updatePassenger(secret: string, id: number, humanId?: numb
             statusCode: 400,
             code: 'passenger_does_not_exist',
             details: {
-                id
-            }
+                id,
+            },
         });
     }
 
     if (seat) {
-        const isSeatOccupied = !!(await $getPassengerBySeat(flightId ?? existingPassenger.flightId, seat));
+        const isSeatOccupied = !!(await $getPassengerBySeat(
+            flightId ?? existingPassenger.flightId,
+            seat,
+        ));
         if (isSeatOccupied) {
             throw new ServiceError('Seat is already taken', {
                 statusCode: 400,
                 code: 'seat_taken',
                 details: {
                     flightId,
-                    seat
-                }
+                    seat,
+                },
             });
         }
     }
 
     if (flightId) {
-        const isPassengerOnFlight = !!(await $getPassengerByFlightId(flightId, humanId ?? existingPassenger.humanId));
+        const isPassengerOnFlight = !!(await $getPassengerByFlightId(
+            flightId,
+            humanId ?? existingPassenger.humanId,
+        ));
         if (isPassengerOnFlight) {
             throw new ServiceError('Human is already on the flight', {
                 statusCode: 400,
@@ -251,7 +282,7 @@ export async function updatePassenger(secret: string, id: number, humanId?: numb
                 details: {
                     flightId,
                     humanId,
-                }
+                },
             });
         }
     }
@@ -263,8 +294,8 @@ export async function updatePassenger(secret: string, id: number, humanId?: numb
                 statusCode: 404,
                 code: 'human_not_found',
                 details: {
-                    humanId
-                }
+                    humanId,
+                },
             });
         }
     }
@@ -293,7 +324,7 @@ export async function updatePassenger(secret: string, id: number, humanId?: numb
 /**
  * Delete passenger
  * @param secret    The secret
- * @param id        The id of the passenger    
+ * @param id        The id of the passenger
  * @returns         The deleted passenger
  */
 export async function deletePassenger(secret: string, id: number) {
@@ -310,8 +341,8 @@ export async function deletePassenger(secret: string, id: number) {
             statusCode: 400,
             code: 'passenger_does_not_exist',
             details: {
-                id
-            }
+                id,
+            },
         });
     }
 
