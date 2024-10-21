@@ -1,10 +1,14 @@
 import { getEnv, ServiceError } from "@getcronit/pylon";
-import { randomUUID } from "crypto";
 
 import getDb from ".";
 import { aircrafts, airlines, airports, flights, humans, luggages, passengers } from "./schema";
+import { generateUUID } from "../utilts";
 
-
+/**
+ * Seed the database with initial data
+ * @param secret    The secret to authorize the seed operation
+ * @returns         A promise that resolves when the seed operation is complete
+ */
 export default async function seed(secret: string) {
     if (getEnv().SEED_SECRET !== secret) {
         throw new ServiceError("Invalid seed secret", {
@@ -123,7 +127,7 @@ export default async function seed(secret: string) {
         ]);
 
         const airportValues = Array.from(airportItems.entries())
-            .map(([id, { name, country }]) => `('${randomUUID()}', '${id}', '${name}', '${country}')`)
+            .map(([id, { name, country }]) => `('${generateUUID()}', '${id}', '${name}', '${country}')`)
             .join(", ");
 
         await db.run(`
@@ -221,7 +225,7 @@ export default async function seed(secret: string) {
         ]);
 
         const aircraftValues = Array.from(aircraftItems.entries())
-            .map(([id, model]) => `('${randomUUID()}', '${id}', '${model}')`)
+            .map(([id, model]) => `('${generateUUID()}', '${id}', '${model}')`)
             .join(", ");
 
         await db.run(`
@@ -316,7 +320,7 @@ export default async function seed(secret: string) {
         ];
 
         const humanValues = humanItems
-            .map(({ firstname, lastname, birthdate }) => `('${randomUUID()}', '${firstname}', '${lastname}', '${birthdate}')`)
+            .map(({ firstname, lastname, birthdate }) => `('${generateUUID()}', '${firstname}', '${lastname}', '${birthdate}')`)
             .join(", ");
 
         await db.run(`
@@ -431,7 +435,7 @@ export default async function seed(secret: string) {
         ];
 
         const airlineValues = airlineItems
-            .map(name => `('${randomUUID()}', '${name}')`)
+            .map(name => `('${generateUUID()}', '${name}')`)
             .join(", ");
 
         await db.run(`
@@ -627,7 +631,7 @@ export default async function seed(secret: string) {
 
         const flightValues = flightItems
             .map(({ flightNumber, departureAirportId, arrivalAirportId, departureTime, arrivalTime, pilot, copilot, airline, status, aircraftId }) =>
-                `('${randomUUID()}', '${flightNumber}', '${departureAirportId}', '${arrivalAirportId}', '${departureTime}', '${arrivalTime}', ${pilot}, ${copilot}, ${airline}, '${status}', '${aircraftId}')`
+                `('${generateUUID()}', '${flightNumber}', '${departureAirportId}', '${arrivalAirportId}', '${departureTime}', '${arrivalTime}', ${pilot}, ${copilot}, ${airline}, '${status}', '${aircraftId}')`
             )
             .join(", ");
 
@@ -743,7 +747,7 @@ export default async function seed(secret: string) {
         ];
 
         const passengerValues = passengerItems
-            .map(({ humanId, seat, class: seatClass, flightId }) => `('${randomUUID()}', ${humanId}, '${seat}', '${seatClass}', ${flightId})`)
+            .map(({ humanId, seat, class: seatClass, flightId }) => `('${generateUUID()}', ${humanId}, '${seat}', '${seatClass}', ${flightId})`)
             .join(", ");
 
         await db.run(`
@@ -837,7 +841,7 @@ export default async function seed(secret: string) {
             { passengerId: 79, weight: 6, type: 'hand', description: 'White leather carry-on' },
         ];
 
-        const luggageValues = luggageItems.map(luggage => `('${randomUUID()}', ${luggage.passengerId}, ${luggage.weight}, '${luggage.type}', '${luggage.description}')`).join(", ");
+        const luggageValues = luggageItems.map(luggage => `('${generateUUID()}', ${luggage.passengerId}, ${luggage.weight}, '${luggage.type}', '${luggage.description}')`).join(", ");
 
         await db.run(`
             INSERT INTO luggages (uuid, passengerId, weight, type, description) VALUES
