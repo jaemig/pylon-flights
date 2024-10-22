@@ -274,11 +274,13 @@ export async function updateLuggage(
     }
 
     try {
-        return await getDb()
+        const [luggage] = await getDb()
             .update(luggages)
             .set(values)
             .where(eq(luggages.id, id))
             .returning();
+
+        return luggage;
     } catch (e) {
         console.error(e);
         throw new ServiceError('Failed to update luggage', {
