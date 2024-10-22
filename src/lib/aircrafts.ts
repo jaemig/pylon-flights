@@ -135,13 +135,14 @@ export async function addAircraft(secret: string, icao: string, model: string) {
     }
 
     const modelInput = model.trim();
-    if (modelInput.length === 0) {
+    if (modelInput.length < 5 || modelInput.length > 100) {
         throw new ServiceError('Invalid aircraft model', {
             statusCode: 400,
             code: 'invalid_aircraft_model',
             details: {
                 model,
-                description: 'The aircraft model must not be empty',
+                description:
+                    'The aircraft model must be between 5 and 100 characters long',
             },
         });
     }
