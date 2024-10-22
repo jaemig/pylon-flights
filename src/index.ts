@@ -30,6 +30,13 @@ import {
     getLuggages,
     updateLuggage,
 } from './lib/luggages';
+import {
+    addAirline,
+    deleteAirline,
+    getAirlineById,
+    getAirlines,
+    updateAirline,
+} from './lib/airlines';
 
 export const graphql = {
     Query: {
@@ -44,6 +51,11 @@ export const graphql = {
         // AIRCRAFTS
         aircraft: getAircraftById,
         aircrafts: getAircrafts,
+
+        // AIRLINES
+        airlines: getAirlines,
+        airline: getAirlineById,
+
 
         // LUGGAGES
         luggage: getLuggageById,
@@ -64,6 +76,11 @@ export const graphql = {
         addAircraft,
         updateAircraft,
         deleteAircraft,
+
+        // AIRLINES
+        addAirline,
+        updateAirline,
+        deleteAirline,
 
         // LUGGAGES
         addLuggage,
