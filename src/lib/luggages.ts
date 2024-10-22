@@ -290,6 +290,12 @@ export async function updateLuggage(
     }
 }
 
+/**
+ * Delete luggage
+ * @param secret    The secret to authorize the operation
+ * @param id        The luggage id
+ * @returns         The deleted luggage
+ */
 export async function deleteLuggage(secret: string, id: number) {
     if (!checkEditSecret(secret)) {
         throw new ServiceError('Unauthorized', {
