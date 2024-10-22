@@ -25,6 +25,7 @@ import {
 } from './lib/passengers';
 import {
     addLuggage,
+    deleteLuggage,
     getLuggageById,
     getLuggages,
     updateLuggage,
@@ -67,6 +68,7 @@ export const graphql = {
         // LUGGAGES
         addLuggage,
         updateLuggage,
+        deleteLuggage,
 
         // MISC
         seed: seed,

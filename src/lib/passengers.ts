@@ -11,7 +11,7 @@ import { checkEditSecret, generateUUID, isValidUUID } from '../utilts';
  * @param id    The id of the passenger
  * @returns     The passenger or undefined if not found
  */
-async function $getPassengerById(id: number) {
+export async function $getPassengerById(id: number) {
     return await getDb()
         .query.passengers.findFirst({
             where: eq(passengers.id, id),
