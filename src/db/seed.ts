@@ -1,4 +1,4 @@
-import { getEnv, ServiceError } from '@getcronit/pylon';
+import { ServiceError } from '@getcronit/pylon';
 
 import getDb from '.';
 import {
@@ -10,7 +10,7 @@ import {
     luggages,
     passengers,
 } from './schema';
-import { generateUUID } from '../utilts';
+import { checkEditSecret, generateUUID } from '../utilts';
 
 /**
  * Seed the database with initial data
@@ -18,10 +18,10 @@ import { generateUUID } from '../utilts';
  * @returns         A promise that resolves when the seed operation is complete
  */
 export default async function seed(secret: string) {
-    if (getEnv().SEED_SECRET !== secret) {
-        throw new ServiceError('Invalid seed secret', {
+    if (!checkEditSecret(secret)) {
+        throw new ServiceError('Unauthorized', {
             statusCode: 401,
-            code: 'INVALID_SECRET',
+            code: 'unauthorized',
         });
     }
     try {
