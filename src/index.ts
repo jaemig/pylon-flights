@@ -55,6 +55,10 @@ export const graphql = {
         passenger: getPassengerById,
         passengers: getPassengers,
 
+        // LUGGAGES
+        luggage: getLuggageById,
+        luggages: getLuggages,
+
         // AIRCRAFTS
         aircraft: getAircraftById,
         aircrafts: getAircrafts,
@@ -66,10 +70,6 @@ export const graphql = {
         // AIRPORTS
         airports: getAirports,
         airport: getAirportById,
-
-        // LUGGAGES
-        luggage: getLuggageById,
-        luggages: getLuggages,
     },
     Mutation: {
         // HUMANS
@@ -81,6 +81,11 @@ export const graphql = {
         addPassenger,
         updatePassenger,
         deletePassenger,
+
+        // LUGGAGES
+        addLuggage,
+        updateLuggage,
+        deleteLuggage,
 
         // AIRCRAFTS
         addAircraft,
@@ -96,11 +101,6 @@ export const graphql = {
         addAirport,
         updateAirport,
         deleteAirport,
-
-        // LUGGAGES
-        addLuggage,
-        updateLuggage,
-        deleteLuggage,
 
         // MISC
         seed: seed,
