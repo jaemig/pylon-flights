@@ -2,7 +2,7 @@ import { ServiceError } from '@getcronit/pylon';
 import { eq, like } from 'drizzle-orm';
 
 import getDb from '../db';
-import { aircrafts } from '../db/schema';
+import { Aircraft, aircrafts } from '../db/schema';
 import { checkEditSecret, generateUUID, isValidUUID } from '../utilts';
 
 /**
@@ -200,8 +200,10 @@ export async function updateAircraft(
         });
     }
 
-    const icaoInput = icao?.trim().toLocaleUpperCase();
-    if (icaoInput) {
+    const values: Partial<Aircraft> = {};
+
+    if (icao !== undefined) {
+        const icaoInput = icao.trim().toLocaleUpperCase();
         if (icaoInput.length !== 4) {
             throw new ServiceError('Invalid aircraft id', {
                 statusCode: 400,
@@ -214,6 +216,7 @@ export async function updateAircraft(
                 },
             });
         }
+
         const existingAircraft = await $getAircraftByICAO(icaoInput);
         if (existingAircraft) {
             throw new ServiceError('Aircraft already exists', {
@@ -226,6 +229,8 @@ export async function updateAircraft(
                 },
             });
         }
+
+        values.icao = icaoInput;
     }
 
     const aircraft = await $getAircraftById(id);
@@ -239,25 +244,33 @@ export async function updateAircraft(
         });
     }
 
-    const modelInput = model?.trim();
-    if (modelInput && modelInput.length === 0) {
-        throw new ServiceError('Invalid aircraft model', {
+    if (model !== undefined) {
+        const modelInput = model?.trim();
+        if (modelInput.length === 0) {
+            throw new ServiceError('Invalid aircraft model', {
+                statusCode: 400,
+                code: 'invalid_aircraft_model',
+                details: {
+                    model,
+                    description: 'The aircraft model must not be empty',
+                },
+            });
+        }
+
+        values.model = modelInput;
+    }
+
+    if (Object.keys(values).length === 0) {
+        throw new ServiceError('No update values provided', {
             statusCode: 400,
-            code: 'invalid_aircraft_model',
-            details: {
-                model,
-                description: 'The aircraft model must not be empty',
-            },
+            code: 'invalid_data',
         });
     }
 
     try {
         const [updatedAircraft] = await getDb()
             .update(aircrafts)
-            .set({
-                icao: icaoInput,
-                model: modelInput,
-            })
+            .set(values)
             .where(eq(aircrafts.id, id))
             .returning();
 
