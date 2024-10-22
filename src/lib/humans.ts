@@ -151,18 +151,26 @@ export async function addHuman(
     }
 
     const firstnameInput = firstname.trim();
-    if (firstnameInput.length === 0) {
-        throw new ServiceError('First name is required', {
+    if (firstnameInput.length < 2 || firstnameInput.length > 100) {
+        throw new ServiceError('Invalid firstname', {
             statusCode: 400,
-            code: 'missing_firstname',
+            code: 'invalid_data',
+            details: {
+                firstname,
+                description: 'First name must be between 2 and 100 characters',
+            },
         });
     }
 
     const lastnameInput = lastname.trim();
     if (lastnameInput.length === 0) {
-        throw new ServiceError('Last name is required', {
+        throw new ServiceError('Invalid lastname', {
             statusCode: 400,
-            code: 'missing_lastname',
+            code: 'invalid_data',
+            details: {
+                lastname,
+                description: 'Last name must be between 2 and 100 characters',
+            },
         });
     }
 
@@ -233,7 +241,7 @@ export async function updateHuman(
         ) {
             throw new ServiceError('Invalid birthdate', {
                 statusCode: 400,
-                code: 'invalid_birthdate',
+                code: 'invalid_data',
                 details: {
                     birthdate,
                     format: 'YYYY-MM-DD',
@@ -245,13 +253,14 @@ export async function updateHuman(
 
     if (firstname !== undefined) {
         const firstnameInput = firstname.trim();
-        if (firstnameInput.length === 0) {
+        if (firstnameInput.length < 2 || firstnameInput.length > 100) {
             throw new ServiceError('Invalid firstname', {
                 statusCode: 400,
-                code: 'missing_firstname',
+                code: 'invalid_data',
                 details: {
                     firstname,
-                    description: 'First name must not be empty',
+                    description:
+                        'First name must be between 2 and 100 characters',
                 },
             });
         }
@@ -260,13 +269,14 @@ export async function updateHuman(
 
     if (lastname !== undefined) {
         const lastnameInput = lastname.trim();
-        if (lastnameInput.length === 0) {
+        if (lastnameInput.length < 2 || lastnameInput.length > 100) {
             throw new ServiceError('Invalid lastname', {
                 statusCode: 400,
-                code: 'missing_lastname',
+                code: 'invalid_data',
                 details: {
                     lastname,
-                    description: 'Last name must not be empty',
+                    description:
+                        'Last name must be between 2 and 100 characters',
                 },
             });
         }
