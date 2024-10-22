@@ -3,7 +3,7 @@ import { ServiceError } from '@getcronit/pylon';
 
 import getDb from '../db';
 import { Airline, airlines } from '../db/schema';
-import { checkEditSecret, generateUUID, isValidUUID } from '../utilts';
+import { checkEditSecret, generateUUID, isValidUUID } from '../utils';
 
 /**
  * Get airline by id (internal)

@@ -10,7 +10,7 @@ import {
     luggages,
     passengers,
 } from './schema';
-import { checkEditSecret, generateUUID } from '../utilts';
+import { checkEditSecret, generateUUID } from '../utils';
 
 /**
  * Seed the database with initial data

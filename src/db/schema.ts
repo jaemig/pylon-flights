@@ -4,8 +4,8 @@ import { int, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 export const humans = sqliteTable('humans', {
     id: int().primaryKey({ autoIncrement: true }),
     uuid: text({ length: 36 }).unique().notNull(),
-    firstname: text({ length: 255 }).notNull(),
-    lastname: text({ length: 255 }).notNull(),
+    firstname: text({ length: 100 }).notNull(),
+    lastname: text({ length: 100 }).notNull(),
     birthdate: text({ length: 10 }).notNull(), // YYYY-MM-DD
 });
 export type Human = typeof humans.$inferSelect;
@@ -44,7 +44,7 @@ export const luggages = sqliteTable('luggages', {
         .notNull(),
     weight: int().notNull(),
     type: text('type', { enum: ['hand', 'checked'] }).notNull(),
-    description: text({ length: 255 }).notNull(),
+    description: text({ length: 100 }).notNull(),
 });
 export type Luggage = typeof luggages.$inferSelect;
 export type LuggageType = Luggage['type'];
@@ -60,8 +60,8 @@ export const airports = sqliteTable('airports', {
     id: int().primaryKey({ autoIncrement: true }),
     uuid: text({ length: 36 }).unique().notNull(),
     icao: text({ length: 4 }).unique().notNull(),
-    name: text({ length: 255 }).notNull(),
-    country: text({ length: 255 }).notNull(),
+    name: text({ length: 100 }).notNull(),
+    country: text({ length: 100 }).notNull(),
 });
 export type Airport = typeof airports.$inferSelect;
 
@@ -110,13 +110,13 @@ export const aircrafts = sqliteTable('aircrafts', {
     id: int().primaryKey({ autoIncrement: true }),
     uuid: text({ length: 36 }).unique().notNull(),
     icao: text({ length: 4 }).unique().notNull(), // ICAO code
-    model: text({ length: 255 }).notNull(),
+    model: text({ length: 100 }).notNull(),
 });
 export type Aircraft = typeof aircrafts.$inferSelect;
 
 export const airlines = sqliteTable('airlines', {
     id: int().primaryKey({ autoIncrement: true }),
     uuid: text({ length: 36 }).unique().notNull(),
-    name: text({ length: 255 }).unique().notNull(),
+    name: text({ length: 100 }).unique().notNull(),
 });
 export type Airline = typeof airlines.$inferSelect;

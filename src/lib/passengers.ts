@@ -4,7 +4,7 @@ import { ServiceError } from '@getcronit/pylon';
 import getDb from '../db';
 import { Passenger, passengers } from '../db/schema';
 import { $getHumanById } from './humans';
-import { checkEditSecret, generateUUID, isValidUUID } from '../utilts';
+import { checkEditSecret, generateUUID, isValidUUID } from '../utils';
 
 /**
  * Get passenger by id (internal)

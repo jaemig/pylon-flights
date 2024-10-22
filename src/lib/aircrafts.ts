@@ -3,7 +3,7 @@ import { eq, like } from 'drizzle-orm';
 
 import getDb from '../db';
 import { Aircraft, aircrafts } from '../db/schema';
-import { checkEditSecret, generateUUID, isValidUUID } from '../utilts';
+import { checkEditSecret, generateUUID, isValidUUID } from '../utils';
 
 /**
  * Get aircraft by id

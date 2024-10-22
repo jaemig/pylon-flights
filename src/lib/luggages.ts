@@ -9,7 +9,7 @@ import {
     countDecimals,
     generateUUID,
     isValidUUID,
-} from '../utilts';
+} from '../utils';
 
 async function $getLuggageById(id: number) {
     return await getDb().query.luggages.findFirst({

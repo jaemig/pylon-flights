@@ -3,7 +3,7 @@ import { ServiceError } from '@getcronit/pylon';
 
 import getDb from '../db';
 import { Human, humans } from '../db/schema';
-import { checkEditSecret, generateUUID, isValidUUID } from '../utilts';
+import { checkEditSecret, generateUUID, isValidUUID } from '../utils';
 
 /**
  * Get human by id
