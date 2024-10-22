@@ -2,7 +2,7 @@ import { and, eq, like, SQL } from 'drizzle-orm';
 import { ServiceError } from '@getcronit/pylon';
 
 import getDb from '../db';
-import { humans } from '../db/schema';
+import { Human, humans } from '../db/schema';
 import { checkEditSecret, generateUUID, isValidUUID } from '../utilts';
 
 /**
@@ -220,6 +220,8 @@ export async function updateHuman(
         });
     }
 
+    const values: Partial<Human> = {};
+
     if (birthdate) {
         const birthdateParts = birthdate.split('-');
 
@@ -238,16 +240,50 @@ export async function updateHuman(
                 },
             });
         }
+        values.birthdate = birthdate;
+    }
+
+    if (firstname !== undefined) {
+        const firstnameInput = firstname.trim();
+        if (firstnameInput.length === 0) {
+            throw new ServiceError('Invalid firstname', {
+                statusCode: 400,
+                code: 'missing_firstname',
+                details: {
+                    firstname,
+                    description: 'First name must not be empty',
+                },
+            });
+        }
+        values.firstname = firstnameInput;
+    }
+
+    if (lastname !== undefined) {
+        const lastnameInput = lastname.trim();
+        if (lastnameInput.length === 0) {
+            throw new ServiceError('Invalid lastname', {
+                statusCode: 400,
+                code: 'missing_lastname',
+                details: {
+                    lastname,
+                    description: 'Last name must not be empty',
+                },
+            });
+        }
+        values.lastname = lastnameInput;
+    }
+
+    if (Object.keys(values).length === 0) {
+        throw new ServiceError('No values to update', {
+            statusCode: 400,
+            code: 'no_values',
+        });
     }
 
     try {
         const [human] = await getDb()
             .update(humans)
-            .set({
-                firstname,
-                lastname,
-                birthdate,
-            })
+            .set(values)
             .where(eq(humans.id, id))
             .returning();
 
