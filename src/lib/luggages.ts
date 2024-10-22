@@ -140,12 +140,13 @@ export async function addLuggage(
     }
 
     const descriptionInput = description.trim();
-    if (descriptionInput && descriptionInput.length === 0) {
-        throw new ServiceError('Luggage description is required', {
+    if (descriptionInput.length < 5 || descriptionInput.length > 100) {
+        throw new ServiceError('Invalid luggage description', {
             statusCode: 400,
             code: 'invalid_data',
             details: {
-                description,
+                input: description,
+                description: 'Description must be between 5 and 100 characters',
             },
         });
     }
@@ -240,7 +241,7 @@ export async function updateLuggage(
 
     if (description !== undefined) {
         const descriptionInput = description.trim();
-        if (descriptionInput.length === 0) {
+        if (descriptionInput.length < 5 || descriptionInput.length > 100) {
             throw new ServiceError('Invalid luggage description', {
                 statusCode: 400,
                 code: 'invalid_data',
