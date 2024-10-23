@@ -977,9 +977,9 @@ export default async function seed(secret: string) {
                 arrivalAirportId: 2, // KLAX
                 departureTime: '2023-10-01T08:00:00Z',
                 arrivalTime: '2023-10-01T11:00:00Z',
-                pilot: 1,
-                copilot: 2,
-                airline: 1,
+                pilotId: 1,
+                copilotId: 2,
+                airlineId: 1,
                 status: 'scheduled',
                 aircraftId: 1, // A320
             },
@@ -989,9 +989,9 @@ export default async function seed(secret: string) {
                 arrivalAirportId: 4, // EGLL
                 departureTime: '2023-10-02T09:00:00Z',
                 arrivalTime: '2023-10-02T10:00:00Z',
-                pilot: 3,
-                copilot: 4,
-                airline: 2,
+                pilotId: 3,
+                copilotId: 4,
+                airlineId: 2,
                 status: 'boarding',
                 aircraftId: 2, // B737
             },
@@ -1001,9 +1001,9 @@ export default async function seed(secret: string) {
                 arrivalAirportId: 6, // RJTT
                 departureTime: '2023-10-03T10:00:00Z',
                 arrivalTime: '2023-10-03T14:00:00Z',
-                pilot: 5,
-                copilot: 6,
-                airline: 3,
+                pilotId: 5,
+                copilotId: 6,
+                airlineId: 3,
                 status: 'departed',
                 aircraftId: 3, // A380
             },
@@ -1013,9 +1013,9 @@ export default async function seed(secret: string) {
                 arrivalAirportId: 8, // OMDB
                 departureTime: '2023-10-04T11:00:00Z',
                 arrivalTime: '2023-10-04T15:00:00Z',
-                pilot: 7,
-                copilot: 8,
-                airline: 4,
+                pilotId: 7,
+                copilotId: 8,
+                airlineId: 4,
                 status: 'arrived',
                 aircraftId: 4, // B747
             },
@@ -1025,9 +1025,9 @@ export default async function seed(secret: string) {
                 arrivalAirportId: 10, // CYYZ
                 departureTime: '2023-10-05T12:00:00Z',
                 arrivalTime: '2023-10-05T16:00:00Z',
-                pilot: 9,
-                copilot: 10,
-                airline: 5,
+                pilotId: 9,
+                copilotId: 10,
+                airlineId: 5,
                 status: 'cancelled',
                 aircraftId: 5, // A321
             },
@@ -1037,9 +1037,9 @@ export default async function seed(secret: string) {
                 arrivalAirportId: 12, // YSSY
                 departureTime: '2023-10-06T13:00:00Z',
                 arrivalTime: '2023-10-07T03:00:00Z',
-                pilot: 11,
-                copilot: 12,
-                airline: 6,
+                pilotId: 11,
+                copilotId: 12,
+                airlineId: 6,
                 status: 'scheduled',
                 aircraftId: 6, // B777
             },
@@ -1049,9 +1049,9 @@ export default async function seed(secret: string) {
                 arrivalAirportId: 14, // EDDF
                 departureTime: '2023-10-07T14:00:00Z',
                 arrivalTime: '2023-10-07T18:00:00Z',
-                pilot: 13,
-                copilot: 14,
-                airline: 7,
+                pilotId: 13,
+                copilotId: 14,
+                airlineId: 7,
                 status: 'boarding',
                 aircraftId: 7, // A330
             },
@@ -1061,9 +1061,9 @@ export default async function seed(secret: string) {
                 arrivalAirportId: 16, // VHHH
                 departureTime: '2023-10-08T15:00:00Z',
                 arrivalTime: '2023-10-08T17:00:00Z',
-                pilot: 15,
-                copilot: 16,
-                airline: 8,
+                pilotId: 15,
+                copilotId: 16,
+                airlineId: 8,
                 status: 'departed',
                 aircraftId: 8, // B787
             },
@@ -1073,9 +1073,9 @@ export default async function seed(secret: string) {
                 arrivalAirportId: 18, // LEMD
                 departureTime: '2023-10-09T16:00:00Z',
                 arrivalTime: '2023-10-09T20:00:00Z',
-                pilot: 17,
-                copilot: 18,
-                airline: 9,
+                pilotId: 17,
+                copilotId: 18,
+                airlineId: 9,
                 status: 'arrived',
                 aircraftId: 9, // A350
             },
@@ -1085,9 +1085,9 @@ export default async function seed(secret: string) {
                 arrivalAirportId: 20, // LSZH
                 departureTime: '2023-10-10T17:00:00Z',
                 arrivalTime: '2023-10-10T19:00:00Z',
-                pilot: 19,
-                copilot: 20,
-                airline: 10,
+                pilotId: 19,
+                copilotId: 20,
+                airlineId: 10,
                 status: 'cancelled',
                 aircraftId: 3, // A380
             },
@@ -1097,9 +1097,9 @@ export default async function seed(secret: string) {
                 arrivalAirportId: 22, // NZAA
                 departureTime: '2023-10-11T18:00:00Z',
                 arrivalTime: '2023-10-12T06:00:00Z',
-                pilot: 21,
-                copilot: 22,
-                airline: 11,
+                pilotId: 21,
+                copilotId: 22,
+                airlineId: 11,
                 status: 'scheduled',
                 aircraftId: 4, // B747
             },
@@ -1109,9 +1109,9 @@ export default async function seed(secret: string) {
                 arrivalAirportId: 24, // RKSI
                 departureTime: '2023-10-12T19:00:00Z',
                 arrivalTime: '2023-10-13T07:00:00Z',
-                pilot: 23,
-                copilot: 24,
-                airline: 12,
+                pilotId: 23,
+                copilotId: 24,
+                airlineId: 12,
                 status: 'boarding',
                 aircraftId: 9, // A350
             },
@@ -1121,9 +1121,9 @@ export default async function seed(secret: string) {
                 arrivalAirportId: 26, // MMMX
                 departureTime: '2023-10-13T20:00:00Z',
                 arrivalTime: '2023-10-13T23:00:00Z',
-                pilot: 25,
-                copilot: 26,
-                airline: 13,
+                pilotId: 25,
+                copilotId: 26,
+                airlineId: 13,
                 status: 'departed',
                 aircraftId: 6, // B777
             },
@@ -1133,9 +1133,9 @@ export default async function seed(secret: string) {
                 arrivalAirportId: 28, // LEBL
                 departureTime: '2023-10-14T21:00:00Z',
                 arrivalTime: '2023-10-14T23:00:00Z',
-                pilot: 27,
-                copilot: 28,
-                airline: 14,
+                pilotId: 27,
+                copilotId: 28,
+                airlineId: 14,
                 status: 'arrived',
                 aircraftId: 1, // A320
             },
@@ -1145,9 +1145,9 @@ export default async function seed(secret: string) {
                 arrivalAirportId: 30, // BIKF
                 departureTime: '2023-10-15T22:00:00Z',
                 arrivalTime: '2023-10-16T01:00:00Z',
-                pilot: 29,
-                copilot: 30,
-                airline: 15,
+                pilotId: 29,
+                copilotId: 30,
+                airlineId: 15,
                 status: 'cancelled',
                 aircraftId: 2, // B737
             },
@@ -1161,18 +1161,18 @@ export default async function seed(secret: string) {
                     arrivalAirportId,
                     departureTime,
                     arrivalTime,
-                    pilot,
-                    copilot,
-                    airline,
+                    pilotId,
+                    copilotId,
+                    airlineId,
                     status,
                     aircraftId,
                 }) =>
-                    `('${generateUUID()}', '${flightNumber}', '${departureAirportId}', '${arrivalAirportId}', '${departureTime}', '${arrivalTime}', ${pilot}, ${copilot}, ${airline}, '${status}', '${aircraftId}')`,
+                    `('${generateUUID()}', '${flightNumber}', '${departureAirportId}', '${arrivalAirportId}', '${departureTime}', '${arrivalTime}', ${pilotId}, ${copilotId}, ${airlineId}, '${status}', '${aircraftId}')`,
             )
             .join(', ');
 
         await db.run(`
-            INSERT INTO flights (uuid, flightNumber, departureAirportId, arrivalAirportId, departureTime, arrivalTime, pilot, copilot, airline, status, aircraftId) VALUES
+            INSERT INTO flights (uuid, flightNumber, departureAirportId, arrivalAirportId, departureTime, arrivalTime, pilotId, copilotId, airlineId, status, aircraftId) VALUES
             ${flightValues};
         `);
 

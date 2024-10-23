@@ -69,21 +69,21 @@ export const flights = sqliteTable('flights', {
     id: int().primaryKey({ autoIncrement: true }),
     uuid: text({ length: 36 }).unique().notNull(),
     flightNumber: text({ length: 7 }).unique().notNull(),
-    departureAirportId: text()
+    departureAirportId: int()
         .references(() => airports.id)
         .notNull(),
-    arrivalAirportId: text()
+    arrivalAirportId: int()
         .references(() => airports.id)
         .notNull(),
     departureTime: text({ length: 25 }).notNull(), // timestamp
     arrivalTime: text({ length: 25 }).notNull(), // timestamp
-    pilot: int()
+    pilotId: int()
         .references(() => humans.id)
         .notNull(),
-    copilot: int()
+    copilotId: int()
         .references(() => humans.id)
         .notNull(),
-    airline: int()
+    airlineId: int()
         .references(() => airlines.id)
         .notNull(),
     status: text('status', {
@@ -103,6 +103,22 @@ export const flightsRelations = relations(flights, ({ one }) => ({
     departureAirport: one(airports, {
         fields: [flights.departureAirportId],
         references: [airports.id],
+    }),
+    pilot: one(humans, {
+        fields: [flights.pilotId],
+        references: [humans.id],
+    }),
+    copilot: one(humans, {
+        fields: [flights.copilotId],
+        references: [humans.id],
+    }),
+    airline: one(airlines, {
+        fields: [flights.airlineId],
+        references: [airlines.id],
+    }),
+    aircraft: one(aircrafts, {
+        fields: [flights.aircraftId],
+        references: [aircrafts.id],
     }),
 }));
 
