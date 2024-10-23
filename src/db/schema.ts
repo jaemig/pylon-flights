@@ -15,12 +15,12 @@ export const humansRelations = relations(humans, ({ many }) => ({
 
 export const passengers = sqliteTable('passengers', {
     id: text({ length: 36 }).primaryKey(),
-    humanId: int()
+    humanId: text()
         .references(() => humans.id, { onDelete: 'cascade' })
         .notNull(),
     seat: text({ length: 10 }).notNull(),
     class: text('class', { enum: ['economy', 'business', 'first'] }).notNull(),
-    flightId: int()
+    flightId: text()
         .references(() => flights.id)
         .notNull(),
 });
@@ -68,21 +68,21 @@ export type Airport = typeof airports.$inferSelect;
 export const flights = sqliteTable('flights', {
     id: text({ length: 36 }).primaryKey(),
     flightNumber: text({ length: 7 }).unique().notNull(),
-    departureAirportId: int()
+    departureAirportId: text()
         .references(() => airports.id)
         .notNull(),
-    arrivalAirportId: int()
+    arrivalAirportId: text()
         .references(() => airports.id)
         .notNull(),
     departureTime: text({ length: 25 }).notNull(), // timestamp
     arrivalTime: text({ length: 25 }).notNull(), // timestamp
-    pilotId: int()
+    pilotId: text()
         .references(() => humans.id)
         .notNull(),
-    copilotId: int()
+    copilotId: text()
         .references(() => humans.id)
         .notNull(),
-    airlineId: int()
+    airlineId: text()
         .references(() => airlines.id)
         .notNull(),
     status: text('status', {

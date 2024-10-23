@@ -15,6 +15,13 @@
       "when": 1729696532802,
       "tag": "0001_right_bullseye",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1729699307850,
+      "tag": "0002_even_slipstream",
+      "breakpoints": true
     }
   ]
 }
