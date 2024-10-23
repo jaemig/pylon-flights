@@ -9,6 +9,7 @@ import {
     validateName,
     validatePagination,
 } from '../utils';
+import { DEFAULT_TAKE } from '../constants';
 
 /**
  * Validate birthdate
@@ -74,7 +75,7 @@ export async function getHumans(
 
     try {
         return await getDb().query.humans.findMany({
-            limit: take ?? 20,
+            limit: take ?? DEFAULT_TAKE,
             offset: skip,
             where: conditions.length > 0 ? and(...conditions) : undefined, // Use `and` only if there are conditions
             columns: {

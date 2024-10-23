@@ -9,6 +9,7 @@ import {
     validateName,
     validatePagination,
 } from '../utils';
+import { DEFAULT_TAKE } from '../constants';
 
 /**
  * Get aircraft by ICAO code
@@ -40,7 +41,7 @@ export async function getAircrafts(
     const filterModel = model?.trim().toLocaleLowerCase();
     try {
         return await getDb().query.aircrafts.findMany({
-            limit: take ?? 20,
+            limit: take ?? DEFAULT_TAKE,
             offset: skip,
             where:
                 filterModel || false
