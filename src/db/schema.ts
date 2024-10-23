@@ -36,7 +36,7 @@ export const passengersRelations = relations(passengers, ({ one, many }) => ({
 
 export const luggages = sqliteTable('luggages', {
     id: text({ length: 36 }).primaryKey(),
-    passengerId: int()
+    passengerId: text()
         .references(() => passengers.id, { onDelete: 'cascade' })
         .notNull(),
     weight: int().notNull(),
