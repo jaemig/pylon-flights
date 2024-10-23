@@ -32,6 +32,10 @@ export const passengersRelations = relations(passengers, ({ one, many }) => ({
         references: [humans.id],
     }),
     luggages: many(luggages),
+    flight: one(flights, {
+        fields: [passengers.flightId],
+        references: [flights.id],
+    }),
 }));
 
 export const luggages = sqliteTable('luggages', {
