@@ -140,6 +140,10 @@ export async function getLuggages(
                     },
                 },
             },
+            columns: {
+                id: false,
+                passengerId: false,
+            },
         });
     } catch (e) {
         console.error(e);
@@ -169,6 +173,9 @@ export async function getLuggageById(id: string) {
     try {
         return await getDb().query.luggages.findFirst({
             where: eq(luggages.id, id),
+            columns: {
+                passengerId: false,
+            },
             with: {
                 passenger: {
                     columns: {
