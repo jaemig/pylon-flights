@@ -78,7 +78,7 @@ export function countDecimals(nr: number): number {
  */
 export function validatePagination(take?: number, skip?: number) {
     if (
-        (take !== undefined && (take < 0 || take > 150)) ||
+        (take !== undefined && (take < 1 || take > 150)) ||
         (skip !== undefined && skip < 0)
     ) {
         throw new ServiceError('Invalid pagination', {
@@ -88,6 +88,21 @@ export function validatePagination(take?: number, skip?: number) {
                 take,
                 skip,
                 maximumTake: 150,
+            },
+        });
+    }
+
+    if (
+        (take && countDecimals(take) > 0) ||
+        (skip && countDecimals(skip) > 0)
+    ) {
+        throw new ServiceError('Invalid pagination', {
+            statusCode: 400,
+            code: 'invalid_pagination',
+            details: {
+                take,
+                skip,
+                description: 'Pagination values must be integers',
             },
         });
     }
