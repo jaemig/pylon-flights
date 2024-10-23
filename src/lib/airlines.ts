@@ -3,18 +3,14 @@ import { ServiceError } from '@getcronit/pylon';
 
 import getDb from '../db';
 import { Airline, airlines } from '../db/schema';
-import { checkEditSecret, generateUUID, isValidUUID } from '../utils';
-
-/**
- * Get airline by id (internal)
- * @param id    The id of the airline
- * @returns     The airline, or undefined if not found
- */
-export async function $getAirlineById(id: number) {
-    return getDb().query.airlines.findFirst({
-        where: eq(airlines.id, id),
-    });
-}
+import {
+    checkEditSecret,
+    generateUUID,
+    isValidUUID,
+    validateName,
+    validatePagination,
+} from '../utils';
+import { DEFAULT_TAKE } from '../constants';
 
 /**
  * Get airline by name (internal)
@@ -35,16 +31,7 @@ export async function $getAirlineByName(name: string) {
  * @returns     Array of airlines
  */
 export async function getAirlines(name?: string, take?: number, skip?: number) {
-    if ((take !== undefined && take < 0) || (skip !== undefined && skip < 0)) {
-        throw new ServiceError('Invalid pagination', {
-            statusCode: 400,
-            code: 'invalid_pagination',
-            details: {
-                take,
-                skip,
-            },
-        });
-    }
+    validatePagination(take, skip);
 
     const conditions: SQL[] = [];
 
@@ -52,7 +39,7 @@ export async function getAirlines(name?: string, take?: number, skip?: number) {
 
     try {
         return await getDb().query.airlines.findMany({
-            limit: take ?? 20,
+            limit: take ?? DEFAULT_TAKE,
             offset: skip,
             where: conditions.length > 0 ? and(...conditions) : undefined,
             columns: {
@@ -86,10 +73,7 @@ export async function getAirlineById(id: string) {
 
     try {
         return await getDb().query.airlines.findFirst({
-            where: eq(airlines.uuid, id),
-            columns: {
-                id: false,
-            },
+            where: eq(airlines.id, id),
         });
     } catch (e) {
         console.error(e);
@@ -102,32 +86,14 @@ export async function getAirlineById(id: string) {
 
 /**
  * Add airline
- * @param secret    The secret to authorize the operation
  * @param name      The name of the airline
  * @returns         The airline
  */
-export async function addAirline(secret: string, name: string) {
-    if (!checkEditSecret(secret)) {
-        throw new ServiceError('UnAuthorized', {
-            statusCode: 401,
-            code: 'unauthorized',
-        });
-    }
+export async function addAirline(name: string) {
+    name = name.trim();
+    validateName(name, 'name', 5);
 
-    const nameInput = name.trim();
-    if (!nameInput || nameInput.length < 5 || nameInput.length > 100) {
-        throw new ServiceError('Invalid name', {
-            statusCode: 400,
-            code: 'invalid_name',
-            details: {
-                name,
-                description:
-                    'The airline name must be between 5 and 100 characters',
-            },
-        });
-    }
-
-    const existsAirline = !!(await $getAirlineByName(nameInput));
+    const existsAirline = !!(await $getAirlineByName(name));
     if (existsAirline) {
         throw new ServiceError('Airline already exists', {
             statusCode: 400,
@@ -143,8 +109,8 @@ export async function addAirline(secret: string, name: string) {
         const [airline] = await getDb()
             .insert(airlines)
             .values({
-                uuid: generateUUID(),
-                name: nameInput,
+                id: generateUUID(),
+                name,
             })
             .returning();
 
@@ -160,20 +126,12 @@ export async function addAirline(secret: string, name: string) {
 
 /**
  * Update airline
- * @param secret    The secret to authorize the operation
  * @param id        The id of the airline
  * @param name      The name of the airline
  * @returns         The updated airline
  */
-export async function updateAirline(secret: string, id: number, name?: string) {
-    if (!checkEditSecret(secret)) {
-        throw new ServiceError('Unauthorized', {
-            statusCode: 401,
-            code: 'unauthorized',
-        });
-    }
-
-    const existingAirline = await $getAirlineById(id);
+export async function updateAirline(id: string, name?: string) {
+    const existingAirline = await getAirlineById(id);
     if (!existingAirline) {
         throw new ServiceError('Airline does not exist', {
             statusCode: 400,
@@ -187,20 +145,10 @@ export async function updateAirline(secret: string, id: number, name?: string) {
     const values: Partial<Airline> = {};
 
     if (name !== undefined) {
-        const nameInput = name.trim();
-        if (!nameInput || nameInput.length < 5 || nameInput.length > 100) {
-            throw new ServiceError('Invalid name', {
-                statusCode: 400,
-                code: 'invalid_name',
-                details: {
-                    name,
-                    description:
-                        'The airline name must be between 5 and 100 characters',
-                },
-            });
-        }
+        name = name.trim();
+        validateName(name, 'name', 5);
 
-        const existsAirline = !!(await $getAirlineByName(nameInput));
+        const existsAirline = !!(await $getAirlineByName(name));
         if (existsAirline) {
             throw new ServiceError('Airline already exists', {
                 statusCode: 400,
@@ -212,7 +160,7 @@ export async function updateAirline(secret: string, id: number, name?: string) {
                 },
             });
         }
-        values.name = nameInput;
+        values.name = name;
     }
 
     if (Object.keys(values).length === 0) {
@@ -241,19 +189,11 @@ export async function updateAirline(secret: string, id: number, name?: string) {
 
 /**
  * Delete airline
- * @param secret    The secret to authorize the operation
  * @param id        The id of the airline
  * @returns         The deleted airline
  */
-export async function deleteAirline(secret: string, id: number) {
-    if (!checkEditSecret(secret)) {
-        throw new ServiceError('Unauthorized', {
-            statusCode: 401,
-            code: 'unauthorized',
-        });
-    }
-
-    const existsAirline = !!(await $getAirlineById(id));
+export async function deleteAirline(id: string) {
+    const existsAirline = !!(await getAirlineById(id));
     if (!existsAirline) {
         throw new ServiceError('Airline not found', {
             statusCode: 404,
