@@ -24,7 +24,7 @@ export const generateUUID = (): string => {
  * @returns         True if the secret is the edit secret, false otherwise
  */
 export const checkEditSecret = (secret: string): boolean => {
-    return getEnv().EDIT_SECRET === secret;
+    return getEnv().SEED_SECRET === secret;
 };
 
 /**

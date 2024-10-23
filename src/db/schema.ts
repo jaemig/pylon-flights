@@ -2,8 +2,7 @@ import { relations } from 'drizzle-orm';
 import { int, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const humans = sqliteTable('humans', {
-    id: int().primaryKey({ autoIncrement: true }),
-    uuid: text({ length: 36 }).unique().notNull(),
+    id: text({ length: 36 }).primaryKey(),
     firstname: text({ length: 100 }).notNull(),
     lastname: text({ length: 100 }).notNull(),
     birthdate: text({ length: 10 }).notNull(), // YYYY-MM-DD
@@ -15,8 +14,7 @@ export const humansRelations = relations(humans, ({ many }) => ({
 }));
 
 export const passengers = sqliteTable('passengers', {
-    id: int().primaryKey({ autoIncrement: true }),
-    uuid: text({ length: 36 }).unique().notNull(),
+    id: text({ length: 36 }).primaryKey(),
     humanId: int()
         .references(() => humans.id, { onDelete: 'cascade' })
         .notNull(),
@@ -37,8 +35,7 @@ export const passengersRelations = relations(passengers, ({ one, many }) => ({
 }));
 
 export const luggages = sqliteTable('luggages', {
-    id: int().primaryKey({ autoIncrement: true }),
-    uuid: text({ length: 36 }).unique().notNull(),
+    id: text({ length: 36 }).primaryKey(),
     passengerId: int()
         .references(() => passengers.id, { onDelete: 'cascade' })
         .notNull(),
@@ -57,8 +54,7 @@ export const luggagesRelations = relations(luggages, ({ one }) => ({
 }));
 
 export const airports = sqliteTable('airports', {
-    id: int().primaryKey({ autoIncrement: true }),
-    uuid: text({ length: 36 }).unique().notNull(),
+    id: text({ length: 36 }).primaryKey(),
     icao: text({ length: 4 }).unique().notNull(),
     name: text({ length: 100 }).notNull(),
     country: text({ length: 100 }).notNull(),
@@ -66,8 +62,7 @@ export const airports = sqliteTable('airports', {
 export type Airport = typeof airports.$inferSelect;
 
 export const flights = sqliteTable('flights', {
-    id: int().primaryKey({ autoIncrement: true }),
-    uuid: text({ length: 36 }).unique().notNull(),
+    id: text({ length: 36 }).primaryKey(),
     flightNumber: text({ length: 7 }).unique().notNull(),
     departureAirportId: int()
         .references(() => airports.id)
@@ -123,16 +118,14 @@ export const flightsRelations = relations(flights, ({ one }) => ({
 }));
 
 export const aircrafts = sqliteTable('aircrafts', {
-    id: int().primaryKey({ autoIncrement: true }),
-    uuid: text({ length: 36 }).unique().notNull(),
+    id: text({ length: 36 }).primaryKey(),
     icao: text({ length: 4 }).unique().notNull(), // ICAO code
     model: text({ length: 100 }).notNull(),
 });
 export type Aircraft = typeof aircrafts.$inferSelect;
 
 export const airlines = sqliteTable('airlines', {
-    id: int().primaryKey({ autoIncrement: true }),
-    uuid: text({ length: 36 }).unique().notNull(),
+    id: text({ length: 36 }).primaryKey(),
     name: text({ length: 100 }).unique().notNull(),
 });
 export type Airline = typeof airlines.$inferSelect;
