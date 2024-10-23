@@ -4,14 +4,21 @@ import { ServiceError } from '@getcronit/pylon';
 import getDb from '../db';
 import { Passenger, passengers } from '../db/schema';
 import { getHumanById } from './humans';
-import { checkEditSecret, generateUUID, isValidUUID } from '../utils';
+import {
+    checkEditSecret,
+    generateUUID,
+    isValidUUID,
+    validatePagination,
+} from '../utils';
+import { DEFAULT_TAKE } from '../constants';
 
 /**
- * Get passenger by id (internal)
- * @param id    The id of the passenger
+ * Get passenger by human id (internal)
+ * Compared to the exposed function, this function provides the foreign key columns
+ * @param id    The id of the human
  * @returns     The passenger or undefined if not found
  */
-export async function $getPassengerById(id: number) {
+async function $getPassengerById(id: string) {
     return await getDb()
         .query.passengers.findFirst({
             where: eq(passengers.id, id),
@@ -25,7 +32,7 @@ export async function $getPassengerById(id: number) {
  * @param seat      The seat number
  * @returns         The passenger or undefined if not found
  */
-async function $getPassengerBySeat(flightId: number, seat: string) {
+async function $getPassengerBySeat(flightId: string, seat: string) {
     return await getDb()
         .query.passengers.findFirst({
             where: and(
@@ -42,7 +49,7 @@ async function $getPassengerBySeat(flightId: number, seat: string) {
  * @param humanId   The id of the human
  * @returns         The passenger or undefined if not found
  */
-async function $getPassengerByFlightId(flightId: number, humanId: number) {
+async function $getPassengerByFlightId(flightId: string, humanId: string) {
     return await getDb()
         .query.passengers.findFirst({
             where: and(
@@ -65,20 +72,11 @@ async function $getPassengerByFlightId(flightId: number, humanId: number) {
 export async function getPassengers(
     seat?: string,
     seatClass?: Passenger['class'],
-    flightId?: number,
+    flightId?: string,
     take?: number,
     skip?: number,
 ) {
-    if ((take !== undefined && take < 0) || (skip !== undefined && skip < 0)) {
-        throw new ServiceError('Invalid pagination', {
-            statusCode: 400,
-            code: 'invalid_pagination',
-            details: {
-                take,
-                skip,
-            },
-        });
-    }
+    validatePagination(take, skip);
 
     const conditions: SQL[] = [];
 
@@ -91,15 +89,26 @@ export async function getPassengers(
 
     try {
         return await getDb().query.passengers.findMany({
-            limit: take ?? 20,
+            limit: take ?? DEFAULT_TAKE,
             offset: skip,
             where: conditions.length > 0 ? and(...conditions) : undefined,
             with: {
-                human: true,
-                luggages: true,
+                human: {
+                    columns: {
+                        id: false,
+                    },
+                },
+                luggages: {
+                    columns: {
+                        id: false,
+                        passengerId: false,
+                    },
+                },
             },
             columns: {
                 id: false,
+                flightId: false,
+                humanId: false,
             },
         });
     } catch (e) {
@@ -127,12 +136,65 @@ export async function getPassengerById(id: string) {
     try {
         return await getDb().query.passengers.findFirst({
             where: eq(passengers.id, id),
-            with: {
-                human: true,
-                luggages: true,
-            },
             columns: {
-                id: false,
+                flightId: false,
+                humanId: false,
+            },
+            with: {
+                human: {
+                    columns: {
+                        id: false,
+                    },
+                },
+                luggages: {
+                    columns: {
+                        id: false,
+                        passengerId: false,
+                    },
+                },
+                flight: {
+                    columns: {
+                        id: false,
+                        aircraftId: false,
+                        airlineId: false,
+                        arrivalAirportId: false,
+                        departureAirportId: false,
+                        copilotId: false,
+                        pilotId: false,
+                    },
+                    with: {
+                        aircraft: {
+                            columns: {
+                                id: false,
+                            },
+                        },
+                        airline: {
+                            columns: {
+                                id: false,
+                            },
+                        },
+                        arrivalAirport: {
+                            columns: {
+                                id: false,
+                            },
+                        },
+                        departureAirport: {
+                            columns: {
+                                id: false,
+                            },
+                        },
+                        copilot: {
+                            columns: {
+                                id: false,
+                            },
+                        },
+                        pilot: {
+                            columns: {
+                                id: false,
+                            },
+                        },
+                    },
+                },
             },
         });
     } catch (e) {
@@ -146,7 +208,6 @@ export async function getPassengerById(id: string) {
 
 /**
  * Add passenger (to flight)
- * @param secret    The secret to authorize the operation
  * @param humanId   The id of the human
  * @param seat      The seat number
  * @param seatClass The class of the seat
@@ -154,19 +215,11 @@ export async function getPassengerById(id: string) {
  * @returns         The passenger
  */
 export async function addPassenger(
-    secret: string,
-    humanId: number,
+    humanId: string,
     seat: string,
     seatClass: Passenger['class'],
-    flightId: number,
+    flightId: string,
 ) {
-    if (!checkEditSecret(secret)) {
-        throw new ServiceError('Unauthorized', {
-            statusCode: 401,
-            code: 'unauthorized',
-        });
-    }
-
     const isSeatOccupied = !!(await $getPassengerBySeat(flightId, seat));
     if (isSeatOccupied) {
         throw new ServiceError('Seat is already taken', {
@@ -194,8 +247,8 @@ export async function addPassenger(
         });
     }
 
-    const human = await getHumanById(humanId);
-    if (!human) {
+    const doesHumanExist = !!(await getHumanById(humanId));
+    if (!doesHumanExist) {
         throw new ServiceError('Human not found', {
             statusCode: 404,
             code: 'human_not_found',
@@ -208,7 +261,7 @@ export async function addPassenger(
     return await getDb()
         .insert(passengers)
         .values({
-            uuid: generateUUID(),
+            id: generateUUID(),
             humanId,
             seat,
             class: seatClass,
@@ -219,7 +272,6 @@ export async function addPassenger(
 
 /**
  * Update passenger
- * @param secret    The secret to authorize the operation
  * @param id        The id of the passenger
  * @param humanId   The id of the human
  * @param seat      The seat number
@@ -228,17 +280,20 @@ export async function addPassenger(
  * @returns         The updated passenger
  */
 export async function updatePassenger(
-    secret: string,
-    id: number,
-    humanId?: number,
+    id: string,
+    humanId?: string,
     seat?: string,
     seatClass?: Passenger['class'],
-    flightId?: number,
+    flightId?: string,
 ) {
-    if (!checkEditSecret(secret)) {
-        throw new ServiceError('Unauthorized', {
-            statusCode: 401,
-            code: 'unauthorized',
+    if (!isValidUUID(id)) {
+        throw new ServiceError('Invalid uuid', {
+            statusCode: 400,
+            code: 'invalid_uuid',
+            details: {
+                id,
+                description: 'The id is not a valid uuid',
+            },
         });
     }
 
@@ -253,12 +308,14 @@ export async function updatePassenger(
         });
     }
 
+    const values: Partial<Passenger> = {};
+
     if (seat) {
-        const isSeatOccupied = !!(await $getPassengerBySeat(
+        const occupiedSeat = await $getPassengerBySeat(
             flightId ?? existingPassenger.flightId,
             seat,
-        ));
-        if (isSeatOccupied) {
+        );
+        if (occupiedSeat && occupiedSeat.id !== id) {
             throw new ServiceError('Seat is already taken', {
                 statusCode: 400,
                 code: 'seat_taken',
@@ -268,14 +325,25 @@ export async function updatePassenger(
                 },
             });
         }
+        values.seat = seat;
     }
 
     if (flightId) {
-        const isPassengerOnFlight = !!(await $getPassengerByFlightId(
+        if (!isValidUUID(flightId)) {
+            throw new ServiceError('Invalid uuid', {
+                statusCode: 400,
+                code: 'invalid_uuid',
+                details: {
+                    flightId,
+                    description: 'The flightId is not a valid uuid',
+                },
+            });
+        }
+        const passengerOnSameFlight = await $getPassengerByFlightId(
             flightId,
             humanId ?? existingPassenger.humanId,
-        ));
-        if (isPassengerOnFlight) {
+        );
+        if (passengerOnSameFlight) {
             throw new ServiceError('Human is already on the flight', {
                 statusCode: 400,
                 code: 'human_on_flight',
@@ -285,10 +353,22 @@ export async function updatePassenger(
                 },
             });
         }
+        values.flightId = flightId;
     }
 
     if (humanId) {
-        const human = await $getHumanById(humanId);
+        if (!isValidUUID(humanId)) {
+            throw new ServiceError('Invalid uuid', {
+                statusCode: 400,
+                code: 'invalid_uuid',
+                details: {
+                    humanId,
+                    description: 'The humanId is not a valid uuid',
+                },
+            });
+        }
+        const human = await getHumanById(humanId);
+
         if (!human) {
             throw new ServiceError('Human not found', {
                 statusCode: 404,
@@ -298,22 +378,49 @@ export async function updatePassenger(
                 },
             });
         }
+
+        const humanOnFlight = await getDb().query.passengers.findFirst({
+            where: and(
+                eq(passengers.flightId, flightId ?? existingPassenger.flightId),
+                eq(passengers.humanId, humanId),
+            ),
+        });
+
+        if (humanOnFlight && humanOnFlight.id !== id) {
+            throw new ServiceError('Human is already on the flight', {
+                statusCode: 400,
+                code: 'human_on_flight',
+                details: {
+                    flightId: flightId ?? existingPassenger.flightId,
+                    humanId,
+                },
+            });
+        }
+
+        values.humanId = humanId;
+    }
+
+    if (seatClass) {
+        values.class = seatClass;
+    }
+
+    if (Object.keys(values).length === 0) {
+        throw new ServiceError('No values to update', {
+            statusCode: 400,
+            code: 'no_update_data',
+        });
     }
 
     try {
         const [passenger] = await getDb()
             .update(passengers)
-            .set({
-                humanId,
-                seat,
-                class: seatClass,
-                flightId,
-            })
+            .set(values)
             .where(eq(passengers.id, id))
             .returning();
 
         return passenger;
-    } catch {
+    } catch (e) {
+        console.error(e);
         throw new ServiceError('Failed to update passenger', {
             statusCode: 400,
             code: 'db_error',
@@ -323,15 +430,17 @@ export async function updatePassenger(
 
 /**
  * Delete passenger
- * @param secret    The secret
  * @param id        The id of the passenger
  * @returns         The deleted passenger
  */
-export async function deletePassenger(secret: string, id: number) {
-    if (!checkEditSecret(secret)) {
-        throw new ServiceError('Unauthorized', {
-            statusCode: 401,
-            code: 'unauthorized',
+export async function deletePassenger(id: string) {
+    if (!isValidUUID(id)) {
+        throw new ServiceError('Invalid uuid', {
+            statusCode: 400,
+            code: 'invalid_uuid',
+            details: {
+                id,
+            },
         });
     }
 
