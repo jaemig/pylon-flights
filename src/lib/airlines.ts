@@ -45,6 +45,51 @@ export async function getAirlines(name?: string, take?: number, skip?: number) {
             columns: {
                 id: false,
             },
+            with: {
+                flights: {
+                    columns: {
+                        id: false,
+                        aircraftId: false,
+                        airlineId: false,
+                        arrivalAirportId: false,
+                        departureAirportId: false,
+                        copilotId: false,
+                        pilotId: false,
+                    },
+                    with: {
+                        aircraft: {
+                            columns: {
+                                id: false,
+                            },
+                        },
+                        airline: {
+                            columns: {
+                                id: false,
+                            },
+                        },
+                        arrivalAirport: {
+                            columns: {
+                                id: false,
+                            },
+                        },
+                        departureAirport: {
+                            columns: {
+                                id: false,
+                            },
+                        },
+                        copilot: {
+                            columns: {
+                                id: false,
+                            },
+                        },
+                        pilot: {
+                            columns: {
+                                id: false,
+                            },
+                        },
+                    },
+                },
+            },
         });
     } catch (e) {
         console.error(e);

@@ -94,7 +94,7 @@ export const flights = sqliteTable('flights', {
 });
 export type Flight = typeof flights.$inferSelect;
 
-export const flightsRelations = relations(flights, ({ one }) => ({
+export const flightsRelations = relations(flights, ({ one, many }) => ({
     arrivalAirport: one(airports, {
         fields: [flights.arrivalAirportId],
         references: [airports.id],
@@ -119,6 +119,7 @@ export const flightsRelations = relations(flights, ({ one }) => ({
         fields: [flights.aircraftId],
         references: [aircrafts.id],
     }),
+    passengers: many(passengers),
 }));
 
 export const aircrafts = sqliteTable('aircrafts', {
@@ -128,8 +129,16 @@ export const aircrafts = sqliteTable('aircrafts', {
 });
 export type Aircraft = typeof aircrafts.$inferSelect;
 
+export const aircraftsRelations = relations(aircrafts, ({ many }) => ({
+    flights: many(flights),
+}));
+
 export const airlines = sqliteTable('airlines', {
     id: text({ length: 36 }).primaryKey(),
     name: text({ length: 100 }).unique().notNull(),
 });
 export type Airline = typeof airlines.$inferSelect;
+
+export const airlinesRelations = relations(airlines, ({ many }) => ({
+    flights: many(flights),
+}));
