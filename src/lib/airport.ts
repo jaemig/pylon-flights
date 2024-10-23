@@ -3,18 +3,13 @@ import { ServiceError } from '@getcronit/pylon';
 
 import getDb from '../db';
 import { Airport, airports } from '../db/schema';
-import { checkEditSecret, generateUUID, isValidUUID } from '../utils';
-
-/**
- * Get airport by id (internal)
- * @param id    The id of the airport
- * @returns     The airport, or undefined if not found
- */
-async function $getAirportById(id: number) {
-    return await getDb().query.airports.findFirst({
-        where: eq(airports.id, id),
-    });
-}
+import {
+    checkEditSecret,
+    generateUUID,
+    isValidUUID,
+    validateName,
+    validatePagination,
+} from '../utils';
 
 /**
  * Get airport by ICAO code (internal)
@@ -43,19 +38,9 @@ export async function getAirports(
     take?: number,
     skip?: number,
 ) {
-    if ((take !== undefined && take < 0) || (skip !== undefined && skip < 0)) {
-        throw new ServiceError('Invalid pagination', {
-            statusCode: 400,
-            code: 'invalid_pagination',
-            details: {
-                take,
-                skip,
-            },
-        });
-    }
+    validatePagination(take, skip);
 
     const conditions: SQL[] = [];
-
     if (icao) conditions.push(like(airports.icao, `${icao.trim()}%`));
     if (name) conditions.push(like(airports.name, `${name.trim()}%`));
     if (country) conditions.push(like(airports.country, `${country.trim()}%`));
@@ -118,28 +103,11 @@ export async function getAirportById(id?: string, icao?: string) {
         }
 
         return await getDb().query.airports.findFirst({
-            where: eq(airports.uuid, id),
+            where: eq(airports.id, id),
         });
     }
 
-    return await $getAirportByICAO(icao!); // ICAO is defined at this point
-}
-
-/**
- * Add airport
- * @param secret    The secret to authorize the operation
- * @param icao      The ICAO code
- * @param name      The name
- * @param country   The country
- * @returns         The added airport
- */
-export async function addAirport(
-    secret: string,
-    icao: string,
-    name: string,
-    country: string,
-) {
-    const icaoInput = icao.trim().toLocaleUpperCase();
+    const icaoInput = icao!.trim();
     if (icaoInput.length !== 4) {
         throw new ServiceError('Invalid ICAO code', {
             statusCode: 400,
@@ -150,8 +118,31 @@ export async function addAirport(
             },
         });
     }
-    const existsIcaoAirport = !!(await $getAirportByICAO(icaoInput));
-    if (existsIcaoAirport) {
+
+    return await $getAirportByICAO(icaoInput); // ICAO is defined at this point
+}
+
+/**
+ * Add airport
+ * @param icao      The ICAO code
+ * @param name      The name
+ * @param country   The country
+ * @returns         The added airport
+ */
+export async function addAirport(icao: string, name: string, country: string) {
+    icao = icao.trim().toLocaleUpperCase();
+    if (icao.length !== 4) {
+        throw new ServiceError('Invalid ICAO code', {
+            statusCode: 400,
+            code: 'invalid_icao',
+            details: {
+                icao,
+                description: 'The ICAO code must be exactly 4 characters',
+            },
+        });
+    }
+    const isIcaoOccupied = !!(await $getAirportByICAO(icao));
+    if (isIcaoOccupied) {
         throw new ServiceError('Airport already exists', {
             statusCode: 400,
             code: 'airport_exists',
@@ -163,44 +154,19 @@ export async function addAirport(
         });
     }
 
-    const nameInput = name.trim();
-    if (name.length < 5 || name.length > 100) {
-        throw new ServiceError('Invalid name', {
-            statusCode: 400,
-            code: 'invalid_name',
-            details: {
-                name,
-                description: 'The name must be between 5 and 100 characters',
-            },
-        });
-    }
+    name = name.trim();
+    validateName(name, 'name', 5);
 
-    const countryInput = country.trim();
-    if (countryInput.length < 5 || countryInput.length > 100) {
-        throw new ServiceError('Invalid country', {
-            statusCode: 400,
-            code: 'invalid_country',
-            details: {
-                country,
-                description: 'The country must be between 5 and 100 characters',
-            },
-        });
-    }
-
-    if (!secret) {
-        throw new ServiceError('Unauthorized', {
-            statusCode: 401,
-            code: 'unauthorized',
-        });
-    }
+    country = country.trim();
+    validateName(country, 'country', 5);
 
     try {
         const [airport] = await getDb()
             .insert(airports)
             .values({
-                uuid: generateUUID(),
-                icao: icaoInput,
-                name: nameInput,
+                id: generateUUID(),
+                icao,
+                name,
                 country,
             })
             .returning();
@@ -216,7 +182,6 @@ export async function addAirport(
 
 /**
  * Update airport
- * @param secret    The secret to authorize the operation
  * @param id        The id of the airport
  * @param icao      The ICAO code
  * @param name      The name
@@ -224,20 +189,12 @@ export async function addAirport(
  * @returns         The updated airport
  */
 export async function updateAirport(
-    secret: string,
-    id: number,
+    id: string,
     icao?: string,
     name?: string,
     country?: string,
 ) {
-    if (!secret) {
-        throw new ServiceError('Unauthorized', {
-            statusCode: 401,
-            code: 'unauthorized',
-        });
-    }
-
-    const existsAirport = !!(await $getAirportById(id));
+    const existsAirport = !!(await getAirportById(id));
     if (!existsAirport) {
         throw new ServiceError('Airport not found', {
             statusCode: 404,
@@ -250,9 +207,9 @@ export async function updateAirport(
 
     const values: Partial<Airport> = {};
 
-    if (icao !== undefined) {
-        const icaoInput = icao.trim().toLocaleUpperCase();
-        if (icaoInput && icaoInput.length !== 4) {
+    const icaoInput = icao?.trim().toLocaleUpperCase();
+    if (icaoInput !== undefined) {
+        if (icaoInput.length !== 4) {
             throw new ServiceError('Invalid ICAO code', {
                 statusCode: 400,
                 code: 'invalid_icao',
@@ -263,8 +220,8 @@ export async function updateAirport(
             });
         }
 
-        const existsIcaoAirport = !!(await $getAirportByICAO(icaoInput));
-        if (existsIcaoAirport) {
+        const existingIcaoAirport = await $getAirportByICAO(icaoInput);
+        if (existingIcaoAirport && existingIcaoAirport.id !== id) {
             throw new ServiceError('Airport already exists', {
                 statusCode: 400,
                 code: 'airport_exists',
@@ -275,43 +232,18 @@ export async function updateAirport(
                 },
             });
         }
-
         values.icao = icaoInput;
     }
 
     if (name !== undefined) {
         const nameInput = name.trim();
-        if (nameInput && (nameInput.length < 5 || nameInput.length > 100)) {
-            throw new ServiceError('Invalid name', {
-                statusCode: 400,
-                code: 'invalid_name',
-                details: {
-                    name,
-                    description:
-                        'The name must be between 5 and 100 characters',
-                },
-            });
-        }
-
+        validateName(name, 'name', 5);
         values.name = nameInput;
     }
 
     if (country !== undefined) {
         const countryInput = country.trim();
-        if (
-            countryInput &&
-            (countryInput.length < 5 || countryInput.length > 100)
-        ) {
-            throw new ServiceError('Invalid country', {
-                statusCode: 400,
-                code: 'invalid_country',
-                details: {
-                    country,
-                    description:
-                        'The country must be between 5 and 100 characters',
-                },
-            });
-        }
+        validateName(country, 'country', 5);
 
         values.country = countryInput;
     }
@@ -341,19 +273,11 @@ export async function updateAirport(
 
 /**
  * Delete airport
- * @param secret    The secret to authorize the operation
  * @param id        The id of the airport
  * @returns         The deleted airport
  */
-export async function deleteAirport(secret: string, id: number) {
-    if (!checkEditSecret(secret)) {
-        throw new ServiceError('Unauthorized', {
-            statusCode: 401,
-            code: 'unauthorized',
-        });
-    }
-
-    const existsAirport = !!(await $getAirportById(id));
+export async function deleteAirport(id: string) {
+    const existsAirport = !!(await getAirportById(id));
     if (!existsAirport) {
         throw new ServiceError('Airport not found', {
             statusCode: 404,
