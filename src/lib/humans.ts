@@ -110,9 +110,6 @@ export async function getHumanById(id: string) {
     try {
         return await getDb().query.humans.findFirst({
             where: eq(humans.id, id),
-            columns: {
-                id: false,
-            },
         });
     } catch (e) {
         console.error(e);
