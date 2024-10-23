@@ -3,20 +3,12 @@ import { eq, like } from 'drizzle-orm';
 
 import getDb from '../db';
 import { Aircraft, aircrafts } from '../db/schema';
-import { checkEditSecret, generateUUID, isValidUUID } from '../utils';
-
-/**
- * Get aircraft by id
- * @param id    The id of the aircraft
- * @returns     The aircraft, or undefined if not found
- */
-async function $getAircraftById(id: number) {
-    return await getDb()
-        .query.aircrafts.findFirst({
-            where: eq(aircrafts.id, id),
-        })
-        .catch(() => undefined);
-}
+import {
+    generateUUID,
+    isValidUUID,
+    validateName,
+    validatePagination,
+} from '../utils';
 
 /**
  * Get aircraft by ICAO code
@@ -43,16 +35,7 @@ export async function getAircrafts(
     take?: number,
     skip?: number,
 ) {
-    if ((take !== undefined && take < 0) || (skip !== undefined && skip < 0)) {
-        throw new ServiceError('Invalid pagination', {
-            statusCode: 400,
-            code: 'invalid_pagination',
-            details: {
-                take,
-                skip,
-            },
-        });
-    }
+    validatePagination(take, skip);
 
     const filterModel = model?.trim().toLocaleLowerCase();
     try {
@@ -77,12 +60,12 @@ export async function getAircrafts(
 }
 
 /**
- * Get aircraft by uuid
- * @param id    The uuid of the aircraft
+ * Get aircraft by id
+ * @param id    The id of the aircraft
  * @returns     The aircraft or undefined if not found
  */
 export async function getAircraftById(id: string) {
-    if (isValidUUID(id)) {
+    if (!isValidUUID(id)) {
         throw new ServiceError('Invalid aircraft id', {
             statusCode: 400,
             code: 'invalid_aircraft_id',
@@ -95,7 +78,7 @@ export async function getAircraftById(id: string) {
 
     try {
         return await getDb().query.aircrafts.findFirst({
-            where: eq(aircrafts.uuid, id),
+            where: eq(aircrafts.id, id),
         });
     } catch (e) {
         console.error(e);
@@ -108,19 +91,11 @@ export async function getAircraftById(id: string) {
 
 /**
  * Add a new aircraft
- * @param secret    The secret to authorize the operation
  * @param icao      The ICAO code of the aircraft
  * @param model     The model name of the aircraft
  * @returns         The added aircraft
  */
-export async function addAircraft(secret: string, icao: string, model: string) {
-    if (!checkEditSecret(secret)) {
-        throw new ServiceError('Unauthorized', {
-            statusCode: 401,
-            code: 'unauthorized',
-        });
-    }
-
+export async function addAircraft(icao: string, model: string) {
     const icaoInput = icao.trim().toLocaleUpperCase();
     if (icaoInput.length !== 4) {
         throw new ServiceError('Invalid ICAO code', {
@@ -134,18 +109,8 @@ export async function addAircraft(secret: string, icao: string, model: string) {
         });
     }
 
-    const modelInput = model.trim();
-    if (modelInput.length < 5 || modelInput.length > 100) {
-        throw new ServiceError('Invalid aircraft model', {
-            statusCode: 400,
-            code: 'invalid_aircraft_model',
-            details: {
-                model,
-                description:
-                    'The aircraft model must be between 5 and 100 characters long',
-            },
-        });
-    }
+    model = model.trim();
+    validateName(model, 'model', 5);
 
     const existingAircraft = await $getAircraftByICAO(icao);
     if (existingAircraft) {
@@ -164,9 +129,9 @@ export async function addAircraft(secret: string, icao: string, model: string) {
         const [aircraft] = await getDb()
             .insert(aircrafts)
             .values({
-                uuid: generateUUID(),
+                id: generateUUID(),
                 icao,
-                model: modelInput,
+                model,
             })
             .returning();
 
@@ -182,59 +147,52 @@ export async function addAircraft(secret: string, icao: string, model: string) {
 
 /**
  * Update aircraft by id
- * @param secret    The secret to authorize the operation
  * @param id        The id of the aircraft
  * @param icao      The ICAO code of the aircraft
  * @param model     The model name of the aircraft
  * @returns         The updated aircraft
  */
 export async function updateAircraft(
-    secret: string,
-    id: number,
+    id: string,
     icao?: string,
     model?: string,
 ) {
-    if (!checkEditSecret(secret)) {
-        throw new ServiceError('Unauthorized', {
-            statusCode: 401,
-            code: 'unauthorized',
-        });
-    }
-
     const values: Partial<Aircraft> = {};
 
     if (icao !== undefined) {
-        const icaoInput = icao.trim().toLocaleUpperCase();
-        if (icaoInput.length !== 4) {
-            throw new ServiceError('Invalid aircraft id', {
+        icao = icao.trim().toLocaleUpperCase();
+        if (icao.length !== 4) {
+            throw new ServiceError('Invalid ICAO code', {
                 statusCode: 400,
-                code: 'invalid_aircraft_id',
+                code: 'invalid_icao_code',
                 details: {
                     icao,
                     expectedLength: 4,
-                    description:
-                        'The aircraft id must follow the ICAO code format',
+                    description: 'The ICAO code must be 4 characters long',
                 },
             });
         }
 
-        const existingAircraft = await $getAircraftByICAO(icaoInput);
-        if (existingAircraft) {
+        const existingAircraft = await $getAircraftByICAO(icao);
+        if (existingAircraft && existingAircraft.id !== id) {
             throw new ServiceError('Aircraft already exists', {
                 statusCode: 400,
                 code: 'aircraft_exists',
                 details: {
-                    icao: icaoInput,
+                    icao,
                     description:
                         'An aircraft with the same ICAO code already exists',
                 },
             });
         }
 
-        values.icao = icaoInput;
+        // Only update the ICAO code if it's different or is not assigned to any aircraft
+        if (!existingAircraft || existingAircraft.icao !== icao) {
+            values.icao = icao;
+        }
     }
 
-    const aircraft = await $getAircraftById(id);
+    const aircraft = await getAircraftById(id);
     if (!aircraft) {
         throw new ServiceError('Aircraft not found', {
             statusCode: 404,
@@ -246,19 +204,10 @@ export async function updateAircraft(
     }
 
     if (model !== undefined) {
-        const modelInput = model?.trim();
-        if (modelInput.length === 0) {
-            throw new ServiceError('Invalid aircraft model', {
-                statusCode: 400,
-                code: 'invalid_aircraft_model',
-                details: {
-                    model,
-                    description: 'The aircraft model must not be empty',
-                },
-            });
-        }
+        model = model.trim();
+        validateName(model, 'model', 5);
 
-        values.model = modelInput;
+        values.model = model;
     }
 
     if (Object.keys(values).length === 0) {
@@ -291,15 +240,19 @@ export async function updateAircraft(
  * @param id        The id of the aircraft
  * @returns         The deleted aircraft
  */
-export async function deleteAircraft(secret: string, id: number) {
-    if (!checkEditSecret(secret)) {
-        throw new ServiceError('Unauthorized', {
-            statusCode: 401,
-            code: 'unauthorized',
+export async function deleteAircraft(id: string) {
+    if (!isValidUUID(id)) {
+        throw new ServiceError('Invalid aircraft id', {
+            statusCode: 400,
+            code: 'invalid_aircraft_id',
+            details: {
+                id,
+                description: 'The aircraft id must be a valid UUID',
+            },
         });
     }
 
-    const aircraft = await $getAircraftById(id);
+    const aircraft = await getAircraftById(id);
     if (!aircraft) {
         throw new ServiceError('Aircraft not found', {
             statusCode: 404,
