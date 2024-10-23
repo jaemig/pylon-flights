@@ -46,7 +46,7 @@ export function validateName(
             statusCode: 400,
             code: 'invalid_data',
             details: {
-                [field]: name,
+                [field === 'description' ? 'input' : field]: name,
                 description: `${field} must be between ${minLength} and ${maxLength} characters`,
             },
         });
