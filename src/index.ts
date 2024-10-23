@@ -5,7 +5,7 @@ import seed from './db/seed';
 import {
     addHuman,
     deleteHuman,
-    getHumanByUuid,
+    getHumanById,
     getHumans,
     updateHuman,
 } from './lib/humans';
@@ -48,7 +48,7 @@ import {
 export const graphql = {
     Query: {
         // HUMANS
-        human: getHumanByUuid,
+        human: getHumanById,
         humans: getHumans,
 
         // PASSENGERS

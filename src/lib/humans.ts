@@ -3,22 +3,41 @@ import { ServiceError } from '@getcronit/pylon';
 
 import getDb from '../db';
 import { Human, humans } from '../db/schema';
-import { checkEditSecret, generateUUID, isValidUUID } from '../utils';
+import {
+    generateUUID,
+    isValidUUID,
+    validateName,
+    validatePagination,
+} from '../utils';
 
 /**
- * Get human by id
- * @param id    The id of the human
- * @returns     The human or undefined if not found
+ * Validate birthdate
+ * @param birthdate The birthdate to validate
+ * @throws          ServiceError if the birthdate is invalid
  */
-export async function $getHumanById(id: number) {
-    try {
-        return await getDb().query.humans.findFirst({
-            where: eq(humans.id, id),
-        });
-    } catch {
-        throw new ServiceError('Failed to get human', {
+function validateBirthdate(birthdate: string): void {
+    const birthdateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!birthdateRegex.test(birthdate)) {
+        throw new ServiceError('Invalid birthdate format', {
             statusCode: 400,
-            code: 'db_error',
+            code: 'invalid_birthdate',
+            details: {
+                birthdate,
+                format: 'YYYY-MM-DD',
+                description: 'The birthdate must be in the format YYYY-MM-DD',
+            },
+        });
+    }
+
+    const date = new Date(birthdate);
+    if (isNaN(date.getTime())) {
+        throw new ServiceError('Invalid birthdate', {
+            statusCode: 400,
+            code: 'invalid_birthdate',
+            details: {
+                birthdate,
+                description: 'The provided date is not valid',
+            },
         });
     }
 }
@@ -36,16 +55,7 @@ export async function getHumans(
     take?: number,
     skip?: number,
 ) {
-    if ((take !== undefined && take < 0) || (skip !== undefined && skip < 0)) {
-        throw new ServiceError('Invalid pagination', {
-            statusCode: 400,
-            code: 'invalid_pagination',
-            details: {
-                take,
-                skip,
-            },
-        });
-    }
+    validatePagination(take, skip);
 
     const conditions: SQL[] = [];
 
@@ -82,10 +92,10 @@ export async function getHumans(
 
 /**
  * Get human by id
- * @param id    The uuid of the human
+ * @param id    The id of the human
  * @returns     The human or undefined if not found
  */
-export async function getHumanByUuid(id: string) {
+export async function getHumanById(id: string) {
     if (!isValidUUID(id)) {
         throw new ServiceError('Invalid uuid', {
             statusCode: 400,
@@ -98,7 +108,7 @@ export async function getHumanByUuid(id: string) {
 
     try {
         return await getDb().query.humans.findFirst({
-            where: eq(humans.uuid, id),
+            where: eq(humans.id, id),
             columns: {
                 id: false,
             },
@@ -114,73 +124,30 @@ export async function getHumanByUuid(id: string) {
 
 /**
  * Add a human
- * @param secret        The secret to authorize the operation
  * @param firstname     The first name of the human
  * @param lastname      The last name of the human
  * @param birthdate     The birthdate of the human
  * @returns             The added human
  */
 export async function addHuman(
-    secret: string,
     firstname: string,
     lastname: string,
     birthdate: string,
 ) {
-    if (!checkEditSecret(secret)) {
-        throw new ServiceError('Unauthorized', {
-            statusCode: 401,
-            code: 'unauthorized',
-        });
-    }
+    firstname = firstname.trim();
+    lastname = lastname.trim();
 
-    const birthdateParts = birthdate.split('-');
-    if (
-        birthdateParts.length !== 3 ||
-        birthdateParts[0].length !== 4 ||
-        birthdateParts[1].length !== 2 ||
-        birthdateParts[2].length !== 2
-    ) {
-        throw new ServiceError('Invalid birthdate', {
-            statusCode: 400,
-            code: 'invalid_birthdate',
-            details: {
-                birthdate,
-                format: 'YYYY-MM-DD',
-            },
-        });
-    }
-
-    const firstnameInput = firstname.trim();
-    if (firstnameInput.length < 2 || firstnameInput.length > 100) {
-        throw new ServiceError('Invalid firstname', {
-            statusCode: 400,
-            code: 'invalid_data',
-            details: {
-                firstname,
-                description: 'First name must be between 2 and 100 characters',
-            },
-        });
-    }
-
-    const lastnameInput = lastname.trim();
-    if (lastnameInput.length === 0) {
-        throw new ServiceError('Invalid lastname', {
-            statusCode: 400,
-            code: 'invalid_data',
-            details: {
-                lastname,
-                description: 'Last name must be between 2 and 100 characters',
-            },
-        });
-    }
+    validateBirthdate(birthdate);
+    validateName(firstname, 'firstname');
+    validateName(lastname, 'lastname');
 
     try {
         const [human] = await getDb()
             .insert(humans)
             .values({
-                uuid: generateUUID(),
-                firstname: firstnameInput,
-                lastname: lastnameInput,
+                id: generateUUID(),
+                firstname: firstname,
+                lastname: lastname,
                 birthdate,
             })
             .returning();
@@ -188,7 +155,7 @@ export async function addHuman(
     } catch (e) {
         console.error(e);
         throw new ServiceError('Failed to add human', {
-            statusCode: 400,
+            statusCode: 500,
             code: 'db_error',
         });
     }
@@ -196,7 +163,6 @@ export async function addHuman(
 
 /**
  * Update a human
- * @param secret        The secret to authorize the operation
  * @param id            The id of the human
  * @param firstname     The first name of the human
  * @param lastname      The last name of the human
@@ -204,104 +170,58 @@ export async function addHuman(
  * @returns             The updated human
  */
 export async function updateHuman(
-    secret: string,
-    id: number,
+    id: string,
     firstname?: string,
     lastname?: string,
     birthdate?: string,
 ) {
-    if (!checkEditSecret(secret)) {
-        throw new ServiceError('Unauthorized', {
-            statusCode: 401,
-            code: 'unauthorized',
-        });
-    }
-
-    const existingHuman = await $getHumanById(id);
+    const existingHuman = await getHumanById(id);
     if (!existingHuman) {
         throw new ServiceError('Human does not exist', {
-            statusCode: 400,
-            code: 'human_does_not_exist',
-            details: {
-                id,
-            },
+            statusCode: 404,
+            code: 'human_not_found',
+            details: { id },
         });
     }
 
     const values: Partial<Human> = {};
 
-    if (birthdate) {
-        const birthdateParts = birthdate.split('-');
-
-        if (
-            birthdateParts.length !== 3 ||
-            birthdateParts[0].length !== 4 ||
-            birthdateParts[1].length !== 2 ||
-            birthdateParts[2].length !== 2
-        ) {
-            throw new ServiceError('Invalid birthdate', {
-                statusCode: 400,
-                code: 'invalid_data',
-                details: {
-                    birthdate,
-                    format: 'YYYY-MM-DD',
-                },
-            });
-        }
+    if (birthdate !== undefined) {
+        validateBirthdate(birthdate);
         values.birthdate = birthdate;
     }
 
     if (firstname !== undefined) {
-        const firstnameInput = firstname.trim();
-        if (firstnameInput.length < 2 || firstnameInput.length > 100) {
-            throw new ServiceError('Invalid firstname', {
-                statusCode: 400,
-                code: 'invalid_data',
-                details: {
-                    firstname,
-                    description:
-                        'First name must be between 2 and 100 characters',
-                },
-            });
-        }
-        values.firstname = firstnameInput;
+        firstname = firstname.trim();
+        validateName(firstname, 'firstname');
+        values.firstname = firstname;
     }
 
     if (lastname !== undefined) {
-        const lastnameInput = lastname.trim();
-        if (lastnameInput.length < 2 || lastnameInput.length > 100) {
-            throw new ServiceError('Invalid lastname', {
-                statusCode: 400,
-                code: 'invalid_data',
-                details: {
-                    lastname,
-                    description:
-                        'Last name must be between 2 and 100 characters',
-                },
-            });
-        }
-        values.lastname = lastnameInput;
+        lastname = lastname.trim();
+        validateName(lastname, 'lastname');
+        values.lastname = lastname;
     }
 
     if (Object.keys(values).length === 0) {
         throw new ServiceError('No values to update', {
             statusCode: 400,
-            code: 'no_values',
+            code: 'no_update_data',
         });
     }
 
     try {
-        const [human] = await getDb()
+        const [updatedHuman] = await getDb()
             .update(humans)
             .set(values)
             .where(eq(humans.id, id))
             .returning();
 
-        return human;
+        return updatedHuman;
     } catch (e) {
         console.error(e);
         throw new ServiceError('Failed to update human', {
-            statusCode: 400,
+            statusCode: 500,
             code: 'db_error',
         });
     }
@@ -309,19 +229,11 @@ export async function updateHuman(
 
 /**
  * Delete a human
- * @param secret    The secret to authorize the operation
  * @param id        The id of the human
  * @returns         The deleted human
  */
-export async function deleteHuman(id: number, secret: string) {
-    if (!checkEditSecret(secret)) {
-        throw new ServiceError('Unauthorized', {
-            statusCode: 401,
-            code: 'unauthorized',
-        });
-    }
-
-    const existingHuman = await $getHumanById(id);
+export async function deleteHuman(id: string) {
+    const existingHuman = await getHumanById(id);
     if (!existingHuman) {
         throw new ServiceError('Human does not exist', {
             statusCode: 400,
