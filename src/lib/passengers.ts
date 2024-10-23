@@ -4,12 +4,7 @@ import { ServiceError } from '@getcronit/pylon';
 import getDb from '../db';
 import { Passenger, passengers } from '../db/schema';
 import { getHumanById } from './humans';
-import {
-    checkEditSecret,
-    generateUUID,
-    isValidUUID,
-    validatePagination,
-} from '../utils';
+import { generateUUID, isValidUUID, validatePagination } from '../utils';
 import { DEFAULT_TAKE } from '../constants';
 
 /**
