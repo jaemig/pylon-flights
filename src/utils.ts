@@ -47,7 +47,7 @@ export function validateName(
             code: 'invalid_data',
             details: {
                 [field]: name,
-                description: `${field} must be between 2 and 100 characters`,
+                description: `${field} must be between ${minLength} and ${maxLength} characters`,
             },
         });
     }
