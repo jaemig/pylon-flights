@@ -3,7 +3,7 @@ import { ServiceError } from '@getcronit/pylon';
 
 import getDb from '../db';
 import { Passenger, passengers } from '../db/schema';
-import { $getHumanById } from './humans';
+import { getHumanById } from './humans';
 import { checkEditSecret, generateUUID, isValidUUID } from '../utils';
 
 /**
@@ -126,7 +126,7 @@ export async function getPassengerById(id: string) {
 
     try {
         return await getDb().query.passengers.findFirst({
-            where: eq(passengers.uuid, id),
+            where: eq(passengers.id, id),
             with: {
                 human: true,
                 luggages: true,
@@ -194,7 +194,7 @@ export async function addPassenger(
         });
     }
 
-    const human = await $getHumanById(humanId);
+    const human = await getHumanById(humanId);
     if (!human) {
         throw new ServiceError('Human not found', {
             statusCode: 404,

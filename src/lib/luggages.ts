@@ -3,18 +3,42 @@ import { SQL, eq, and } from 'drizzle-orm';
 
 import getDb from '../db';
 import { Luggage, luggages } from '../db/schema';
-import { $getPassengerById } from './passengers';
+import { getPassengerById } from './passengers';
 import {
-    checkEditSecret,
-    countDecimals,
     generateUUID,
     isValidUUID,
+    validateName,
+    validatePagination,
 } from '../utils';
+import { DEFAULT_TAKE } from '../constants';
 
-async function $getLuggageById(id: number) {
-    return await getDb().query.luggages.findFirst({
-        where: eq(luggages.id, id),
-    });
+/**
+ * Validate luggage weight
+ * @param weight    The luggage weight
+ * @param type      The luggage type
+ */
+function validateWeight(weight: number, type: Luggage['type']) {
+    if (type === 'hand' && (weight < 0.1 || weight > 10)) {
+        throw new ServiceError('Invalid luggage weight', {
+            statusCode: 400,
+            code: 'invalid_data',
+            details: {
+                weight,
+                description: 'Hand luggage must be between 0.1 and 12 kg',
+            },
+        });
+    }
+
+    if (type === 'checked' && (weight < 0.1 || weight > 32)) {
+        throw new ServiceError('Invalid luggage weight', {
+            statusCode: 400,
+            code: 'invalid_data',
+            details: {
+                weight,
+                description: 'Checked luggage must be between 0.1 and 32 kg',
+            },
+        });
+    }
 }
 
 /**
@@ -28,34 +52,91 @@ async function $getLuggageById(id: number) {
 export async function getLuggages(
     take?: number,
     skip?: number,
-    passengerId?: number,
+    passengerId?: string,
     type?: Luggage['type'],
 ) {
-    if ((take !== undefined && take < 0) || (skip !== undefined && skip < 0)) {
-        throw new ServiceError('Invalid pagination', {
-            statusCode: 400,
-            code: 'invalid_pagination',
-            details: {
-                take,
-                skip,
-            },
-        });
-    }
+    validatePagination(take, skip);
 
     const conditions: SQL[] = [];
 
-    if (passengerId) conditions.push(eq(luggages.passengerId, passengerId));
-    if (type) conditions.push(eq(luggages.type, type));
+    if (passengerId) {
+        if (!isValidUUID(passengerId)) {
+            throw new ServiceError('Invalid uuid', {
+                statusCode: 400,
+                code: 'invalid_uuid',
+                details: {
+                    passengerId,
+                },
+            });
+        }
+        conditions.push(eq(luggages.passengerId, passengerId));
+    }
+
+    if (type) {
+        conditions.push(eq(luggages.type, type));
+    }
 
     try {
         return await getDb().query.luggages.findMany({
-            limit: take ?? 20,
+            limit: take ?? DEFAULT_TAKE,
             offset: skip,
             where: conditions.length > 0 ? and(...conditions) : undefined,
             with: {
                 passenger: {
+                    columns: {
+                        id: false,
+                        flightId: false,
+                        humanId: false,
+                    },
                     with: {
-                        human: true,
+                        human: {
+                            columns: {
+                                id: false,
+                            },
+                        },
+                        flight: {
+                            columns: {
+                                id: false,
+                                aircraftId: false,
+                                airlineId: false,
+                                arrivalAirportId: false,
+                                departureAirportId: false,
+                                copilotId: false,
+                                pilotId: false,
+                            },
+                            with: {
+                                aircraft: {
+                                    columns: {
+                                        id: false,
+                                    },
+                                },
+                                airline: {
+                                    columns: {
+                                        id: false,
+                                    },
+                                },
+                                arrivalAirport: {
+                                    columns: {
+                                        id: false,
+                                    },
+                                },
+                                departureAirport: {
+                                    columns: {
+                                        id: false,
+                                    },
+                                },
+                                copilot: {
+                                    columns: {
+                                        id: false,
+                                    },
+                                },
+                                pilot: {
+                                    columns: {
+                                        id: false,
+                                    },
+                                },
+                            },
+                        },
                     },
                 },
             },
@@ -87,11 +168,63 @@ export async function getLuggageById(id: string) {
 
     try {
         return await getDb().query.luggages.findFirst({
-            where: eq(luggages.uuid, id),
+            where: eq(luggages.id, id),
             with: {
                 passenger: {
+                    columns: {
+                        id: false,
+                        flightId: false,
+                        humanId: false,
+                    },
                     with: {
-                        human: true,
+                        human: {
+                            columns: {
+                                id: false,
+                            },
+                        },
+                        flight: {
+                            columns: {
+                                id: false,
+                                aircraftId: false,
+                                airlineId: false,
+                                arrivalAirportId: false,
+                                departureAirportId: false,
+                                copilotId: false,
+                                pilotId: false,
+                            },
+                            with: {
+                                aircraft: {
+                                    columns: {
+                                        id: false,
+                                    },
+                                },
+                                airline: {
+                                    columns: {
+                                        id: false,
+                                    },
+                                },
+                                arrivalAirport: {
+                                    columns: {
+                                        id: false,
+                                    },
+                                },
+                                departureAirport: {
+                                    columns: {
+                                        id: false,
+                                    },
+                                },
+                                copilot: {
+                                    columns: {
+                                        id: false,
+                                    },
+                                },
+                                pilot: {
+                                    columns: {
+                                        id: false,
+                                    },
+                                },
+                            },
+                        },
                     },
                 },
             },
@@ -107,7 +240,6 @@ export async function getLuggageById(id: string) {
 
 /**
  * Add luggage
- * @param secret        The secret to authorize the operation
  * @param passengerId   The passenger id
  * @param weight        The luggage weight (in kg)
  * @param type          The luggage type
@@ -115,43 +247,17 @@ export async function getLuggageById(id: string) {
  * @returns             The added luggage
  */
 export async function addLuggage(
-    secret: string,
-    passengerId: number,
+    passengerId: string,
     weight: number,
     type: Luggage['type'],
     description: string,
 ) {
-    if (!checkEditSecret(secret)) {
-        throw new ServiceError('Unauthorized', {
-            statusCode: 401,
-            code: 'unauthorized',
-        });
-    }
-    if (weight < 0.1 || weight > 32 || countDecimals(weight) > 2) {
-        throw new ServiceError('Invalid luggage weight', {
-            statusCode: 400,
-            code: 'invalid_data',
-            details: {
-                weight,
-                description:
-                    'Weight must be between 0.1 and 32 kg and have at most 2 decimals',
-            },
-        });
-    }
+    validateWeight(weight, type);
 
     const descriptionInput = description.trim();
-    if (descriptionInput.length < 5 || descriptionInput.length > 100) {
-        throw new ServiceError('Invalid luggage description', {
-            statusCode: 400,
-            code: 'invalid_data',
-            details: {
-                input: description,
-                description: 'Description must be between 5 and 100 characters',
-            },
-        });
-    }
+    validateName(descriptionInput, 'description', 5);
 
-    const existsPassenger = !!(await $getPassengerById(passengerId));
+    const existsPassenger = !!(await getPassengerById(passengerId));
     if (!existsPassenger) {
         throw new ServiceError('Passenger not found', {
             statusCode: 404,
@@ -166,9 +272,9 @@ export async function addLuggage(
         return await getDb()
             .insert(luggages)
             .values({
-                uuid: generateUUID(),
+                id: generateUUID(),
                 passengerId,
-                weight,
+                weight: Number(weight.toFixed(1)),
                 type,
                 description: descriptionInput,
             })
@@ -184,7 +290,6 @@ export async function addLuggage(
 
 /**
  * Update luggage
- * @param secret       The secret to authorize the operation
  * @param id           The luggage id
  * @param passengerId   The passenger id
  * @param weight        The luggage weight
@@ -193,22 +298,14 @@ export async function addLuggage(
  * @returns             The updated luggage
  */
 export async function updateLuggage(
-    secret: string,
-    id: number,
-    passengerId?: number,
+    id: string,
+    passengerId?: string,
     weight?: number,
     type?: 'hand' | 'checked',
     description?: string,
 ) {
-    if (!checkEditSecret(secret)) {
-        throw new ServiceError('Unauthorized', {
-            statusCode: 401,
-            code: 'unauthorized',
-        });
-    }
-
-    const existsLuggage = !!(await $getLuggageById(id));
-    if (!existsLuggage) {
+    const luggage = await getLuggageById(id);
+    if (!luggage) {
         throw new ServiceError('Luggage not found', {
             statusCode: 404,
             code: 'not_found',
@@ -221,40 +318,23 @@ export async function updateLuggage(
     const values: Partial<Luggage> = {};
 
     if (weight) {
-        if (weight < 0.1 || weight > 32 || countDecimals(weight) > 2) {
-            throw new ServiceError('Invalid luggage weight', {
-                statusCode: 400,
-                code: 'invalid_data',
-                details: {
-                    weight,
-                    description:
-                        'Weight must be between 0.1 and 32 kg and have at most 2 decimals',
-                },
-            });
-        }
-        values.weight = weight;
+        validateWeight(weight, type ?? luggage.type);
+        values.weight = Number(weight.toFixed(1));
     }
 
     if (type) {
+        validateWeight(weight ?? luggage.weight, type);
         values.type = type;
     }
 
     if (description !== undefined) {
         const descriptionInput = description.trim();
-        if (descriptionInput.length < 5 || descriptionInput.length > 100) {
-            throw new ServiceError('Invalid luggage description', {
-                statusCode: 400,
-                code: 'invalid_data',
-                details: {
-                    description,
-                },
-            });
-        }
+        validateName(descriptionInput, 'description', 5);
         values.description = descriptionInput;
     }
 
     if (passengerId) {
-        const existsPassenger = !!(await $getPassengerById(passengerId));
+        const existsPassenger = !!(await getPassengerById(passengerId));
         if (!existsPassenger) {
             throw new ServiceError('Passenger not found', {
                 statusCode: 404,
@@ -293,19 +373,11 @@ export async function updateLuggage(
 
 /**
  * Delete luggage
- * @param secret    The secret to authorize the operation
  * @param id        The luggage id
  * @returns         The deleted luggage
  */
-export async function deleteLuggage(secret: string, id: number) {
-    if (!checkEditSecret(secret)) {
-        throw new ServiceError('Unauthorized', {
-            statusCode: 401,
-            code: 'unauthorized',
-        });
-    }
-
-    const existsLuggage = !!(await $getLuggageById(id));
+export async function deleteLuggage(id: string) {
+    const existsLuggage = !!(await getLuggageById(id));
     if (!existsLuggage) {
         throw new ServiceError('Luggage not found', {
             statusCode: 404,
