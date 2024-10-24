@@ -3,6 +3,7 @@ import '@getcronit/pylon';
 declare module '@getcronit/pylon' {
     interface Bindings {
         DB: D1Database;
+        RATE_LIMITER: RateLimit;
         SEED_SECRET: string;
     }
 

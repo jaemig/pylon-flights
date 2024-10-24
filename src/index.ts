@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { app } from '@getcronit/pylon';
+import { app, Bindings, Env } from '@getcronit/pylon';
 
 import seed from './db/seed';
 import {
@@ -51,6 +51,14 @@ import {
     getFlights,
     updateFlight,
 } from './lib/flights';
+import { cloudflareRateLimiter } from '@hono-rate-limiter/cloudflare';
+
+app.use(
+    cloudflareRateLimiter<Env>({
+        rateLimitBinding: (c) => (c.env as Bindings).RATE_LIMITER,
+        keyGenerator: (c) => c.req.header('cf-connecting-ip') ?? '',
+    }),
+);
 
 export const graphql = {
     Query: {
