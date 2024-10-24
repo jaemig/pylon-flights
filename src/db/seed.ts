@@ -1133,7 +1133,7 @@ export default async function seed(secret: string) {
 
         // Generate and insert passengers
         const passengerItems = flightItems.flatMap((flight) => {
-            const passengerCount = Math.floor(Math.random() * 50) + 50; // 50-100 passengers per flight
+            const passengerCount = Math.floor(Math.random() * 30) + 10; // 10-40 passengers per flight
             return Array.from({ length: passengerCount }, () => ({
                 id: generateUUID(),
                 humanId: getRandomItem(humanItems).id,
