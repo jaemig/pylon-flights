@@ -11,6 +11,7 @@
     },
     "dependencies": {
         "@getcronit/pylon": "^2.0.0",
+        "@hono-rate-limiter/cloudflare": "^0.2.1",
         "@libsql/client": "^0.14.0",
         "dotenv": "^16.4.5",
         "drizzle-orm": "^0.35.1"
