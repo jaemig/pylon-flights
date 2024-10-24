@@ -110,7 +110,3 @@ This project is licensed under the [MIT License](LICENSE).
 ## Acknowledgements
 
 Special thanks goes to [@schettn](https://github.com/schettn) for the guidance and support in building this application.
-
-```
-
-```
