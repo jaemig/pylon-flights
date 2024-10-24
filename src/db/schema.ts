@@ -67,7 +67,7 @@ export type Airport = typeof airports.$inferSelect;
 
 export const flights = sqliteTable('flights', {
     id: text({ length: 36 }).primaryKey(),
-    flightNumber: text({ length: 7 }).unique().notNull(),
+    flightNumber: text({ length: 6 }).notNull(),
     departureAirportId: text()
         .references(() => airports.id)
         .notNull(),
