@@ -4,7 +4,6 @@ import { ServiceError } from '@getcronit/pylon';
 import getDb from '../db';
 import { Airport, airports } from '../db/schema';
 import {
-    checkEditSecret,
     generateUUID,
     isValidUUID,
     validateName,

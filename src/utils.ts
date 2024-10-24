@@ -19,15 +19,6 @@ export function generateUUID(): string {
 }
 
 /**
- * Check if the given secret is the edit secret
- * @param secret    The secret to check
- * @returns         True if the secret is the edit secret, false otherwise
- */
-export function checkEditSecret(secret: string): boolean {
-    return getEnv().SEED_SECRET === secret;
-}
-
-/**
  * Validate name
  * @param name      The name to validate (should be trimmed before calling this function)
  * @param field     The field name
