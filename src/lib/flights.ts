@@ -956,7 +956,7 @@ export async function updateFlight(
  * @returns     The deleted flight
  */
 export async function deleteFlight(id: string) {
-    const existingFlight = getFlightById(id);
+    const existingFlight = await getFlightById(id);
     if (!existingFlight) {
         throw new ServiceError('Flight not found', {
             statusCode: 404,
