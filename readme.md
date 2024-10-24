@@ -2,7 +2,7 @@
 
 ## Overview
 
-Pylon Flights is a backend application designed to manage flight operations, including handling pilots, copilots, passengers, aircraft, and related logistics. Built with modern technologies, it ensures efficient data management and seamless deployment.
+Pylon Flights is a pylon-based backend application designed to manage flight operations, including handling pilots, copilots, passengers, aircraft, and related logistics. Built with modern technologies, it ensures efficient data management and seamless deployment.
 
 ## Features
 
@@ -21,6 +21,14 @@ Pylon Flights is a backend application designed to manage flight operations, inc
 -   **Wrangler:** CLI tool for managing Cloudflare Workers.
 -   **ESLint & Prettier:** Code linting and formatting tools.
 
+## Free-to-Use API
+
+The application is deployed as a Cloudflare Worker and it's graphql endpoint is available for public use. You can access the API at the following URL:
+
+```plaintext
+https://pylon-flights.jan-emig.workers.dev/graphql
+```
+
 ## Installation
 
 1. **Clone the Repository:**
@@ -37,7 +45,7 @@ Pylon Flights is a backend application designed to manage flight operations, inc
     ```
 
 3. **Configure Environment Variables:**
-    - Create a `.env` file based on the provided `.env.example`.
+    - Create a `.env` file based on the provided `.env.public`.
     - Set up necessary environment variables for database connections and other services.
 
 ## Scripts
@@ -87,7 +95,7 @@ Pylon Flights is a backend application designed to manage flight operations, inc
 -   **`migrations/`**
     -   Database migration scripts.
 
-# Pylon
+## Pylon
 
 This project is built using the Pylon framework. Pylon is an open-source framework for efficently creating easy and complex GraphQL interfaces. Check out the [Pylon website](https://pylon.cronit.io) or the [GitHub repository](https://github.com/getcronit/pylon) for more information.
 
@@ -102,3 +110,7 @@ This project is licensed under the [MIT License](LICENSE).
 ## Acknowledgements
 
 Special thanks goes to [@schettn](https://github.com/schettn) for the guidance and support in building this application.
+
+```
+
+```
