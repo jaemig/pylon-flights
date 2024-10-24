@@ -21,7 +21,7 @@ export const passengers = sqliteTable('passengers', {
     seat: text({ length: 10 }).notNull(),
     class: text('class', { enum: ['economy', 'business', 'first'] }).notNull(),
     flightId: text()
-        .references(() => flights.id)
+        .references(() => flights.id, { onDelete: 'cascade' })
         .notNull(),
 });
 export type Passenger = typeof passengers.$inferSelect;
@@ -69,27 +69,27 @@ export const flights = sqliteTable('flights', {
     id: text({ length: 36 }).primaryKey(),
     flightNumber: text({ length: 6 }).notNull(),
     departureAirportId: text()
-        .references(() => airports.id)
+        .references(() => airports.id, { onDelete: 'cascade' })
         .notNull(),
     arrivalAirportId: text()
-        .references(() => airports.id)
+        .references(() => airports.id, { onDelete: 'cascade' })
         .notNull(),
     departureTime: text({ length: 25 }).notNull(), // timestamp
     arrivalTime: text({ length: 25 }).notNull(), // timestamp
     pilotId: text()
-        .references(() => humans.id)
+        .references(() => humans.id, { onDelete: 'cascade' })
         .notNull(),
     copilotId: text()
-        .references(() => humans.id)
+        .references(() => humans.id, { onDelete: 'cascade' })
         .notNull(),
     airlineId: text()
-        .references(() => airlines.id)
+        .references(() => airlines.id, { onDelete: 'cascade' })
         .notNull(),
     status: text('status', {
         enum: ['scheduled', 'boarding', 'departed', 'arrived', 'cancelled'],
     }).notNull(),
     aircraftId: text()
-        .references(() => aircrafts.id)
+        .references(() => aircrafts.id, { onDelete: 'cascade' })
         .notNull(),
 });
 export type Flight = typeof flights.$inferSelect;
