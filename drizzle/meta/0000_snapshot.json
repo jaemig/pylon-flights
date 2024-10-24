@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "d49e1926-891f-479e-989b-2b63909b32c1",
+  "id": "5e0a8683-ae58-4e58-9b7f-ac98fab82635",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "aircrafts": {
@@ -133,21 +133,21 @@
         },
         "flightNumber": {
           "name": "flightNumber",
-          "type": "text(7)",
+          "type": "text(6)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "departureAirportId": {
           "name": "departureAirportId",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "arrivalAirportId": {
           "name": "arrivalAirportId",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -168,21 +168,21 @@
         },
         "pilotId": {
           "name": "pilotId",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "copilotId": {
           "name": "copilotId",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "airlineId": {
           "name": "airlineId",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -202,15 +202,7 @@
           "autoincrement": false
         }
       },
-      "indexes": {
-        "flights_flightNumber_unique": {
-          "name": "flights_flightNumber_unique",
-          "columns": [
-            "flightNumber"
-          ],
-          "isUnique": true
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
         "flights_departureAirportId_airports_id_fk": {
           "name": "flights_departureAirportId_airports_id_fk",
@@ -222,7 +214,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "flights_arrivalAirportId_airports_id_fk": {
@@ -235,7 +227,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "flights_pilotId_humans_id_fk": {
@@ -248,7 +240,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "flights_copilotId_humans_id_fk": {
@@ -261,7 +253,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "flights_airlineId_airlines_id_fk": {
@@ -274,7 +266,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "flights_aircraftId_aircrafts_id_fk": {
@@ -287,7 +279,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -345,7 +337,7 @@
         },
         "passengerId": {
           "name": "passengerId",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -404,7 +396,7 @@
         },
         "humanId": {
           "name": "humanId",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -425,7 +417,7 @@
         },
         "flightId": {
           "name": "flightId",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -456,7 +448,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },

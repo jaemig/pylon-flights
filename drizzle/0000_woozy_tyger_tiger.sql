@@ -1,5 +1,25 @@
-PRAGMA foreign_keys=OFF;--> statement-breakpoint
-CREATE TABLE `__new_flights` (
+CREATE TABLE `aircrafts` (
+	`id` text(36) PRIMARY KEY NOT NULL,
+	`icao` text(4) NOT NULL,
+	`model` text(100) NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `aircrafts_icao_unique` ON `aircrafts` (`icao`);--> statement-breakpoint
+CREATE TABLE `airlines` (
+	`id` text(36) PRIMARY KEY NOT NULL,
+	`name` text(100) NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `airlines_name_unique` ON `airlines` (`name`);--> statement-breakpoint
+CREATE TABLE `airports` (
+	`id` text(36) PRIMARY KEY NOT NULL,
+	`icao` text(4) NOT NULL,
+	`name` text(100) NOT NULL,
+	`country` text(100) NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `airports_icao_unique` ON `airports` (`icao`);--> statement-breakpoint
+CREATE TABLE `flights` (
 	`id` text(36) PRIMARY KEY NOT NULL,
 	`flightNumber` text(6) NOT NULL,
 	`departureAirportId` text NOT NULL,
@@ -19,11 +39,23 @@ CREATE TABLE `__new_flights` (
 	FOREIGN KEY (`aircraftId`) REFERENCES `aircrafts`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-INSERT INTO `__new_flights`("id", "flightNumber", "departureAirportId", "arrivalAirportId", "departureTime", "arrivalTime", "pilotId", "copilotId", "airlineId", "status", "aircraftId") SELECT "id", "flightNumber", "departureAirportId", "arrivalAirportId", "departureTime", "arrivalTime", "pilotId", "copilotId", "airlineId", "status", "aircraftId" FROM `flights`;--> statement-breakpoint
-DROP TABLE `flights`;--> statement-breakpoint
-ALTER TABLE `__new_flights` RENAME TO `flights`;--> statement-breakpoint
-PRAGMA foreign_keys=ON;--> statement-breakpoint
-CREATE TABLE `__new_passengers` (
+CREATE TABLE `humans` (
+	`id` text(36) PRIMARY KEY NOT NULL,
+	`firstname` text(100) NOT NULL,
+	`lastname` text(100) NOT NULL,
+	`birthdate` text(10) NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE `luggages` (
+	`id` text(36) PRIMARY KEY NOT NULL,
+	`passengerId` text NOT NULL,
+	`weight` integer NOT NULL,
+	`type` text NOT NULL,
+	`description` text(100) NOT NULL,
+	FOREIGN KEY (`passengerId`) REFERENCES `passengers`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE TABLE `passengers` (
 	`id` text(36) PRIMARY KEY NOT NULL,
 	`humanId` text NOT NULL,
 	`seat` text(10) NOT NULL,
@@ -32,7 +64,3 @@ CREATE TABLE `__new_passengers` (
 	FOREIGN KEY (`humanId`) REFERENCES `humans`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`flightId`) REFERENCES `flights`(`id`) ON UPDATE no action ON DELETE cascade
 );
---> statement-breakpoint
-INSERT INTO `__new_passengers`("id", "humanId", "seat", "class", "flightId") SELECT "id", "humanId", "seat", "class", "flightId" FROM `passengers`;--> statement-breakpoint
-DROP TABLE `passengers`;--> statement-breakpoint
-ALTER TABLE `__new_passengers` RENAME TO `passengers`;
