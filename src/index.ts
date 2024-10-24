@@ -44,6 +44,13 @@ import {
     getAirports,
     updateAirport,
 } from './lib/airport';
+import {
+    addFlight,
+    deleteFlight,
+    getFlightById,
+    getFlights,
+    updateFlight,
+} from './lib/flights';
 
 export const graphql = {
     Query: {
@@ -70,6 +77,10 @@ export const graphql = {
         // AIRPORTS
         airports: getAirports,
         airport: getAirportById,
+
+        // FLIGHTS
+        flights: getFlights,
+        flight: getFlightById,
     },
     Mutation: {
         // HUMANS
@@ -101,6 +112,11 @@ export const graphql = {
         addAirport,
         updateAirport,
         deleteAirport,
+
+        // FLIGHTS
+        addFlight: addFlight,
+        updateFlight: updateFlight,
+        deleteFlight: deleteFlight,
 
         // MISC
         seed: seed,
